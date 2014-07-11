@@ -30,9 +30,11 @@ public class MyTextArrayWritable extends ArrayWritable {
     public MyTextArrayWritable(String[] values, String skipString) {
         super(Text.class);
         Text[] textArray = new Text[values.length - 1];
-        for (int i = 0; i < textArray.length; i++) {
-            if (!values[i].equals(skipString)) {
-                textArray[i] = new Text(values[i]);
+        int i = 0;
+        for (String v : values) {
+            if (!v.equals(skipString)) {
+                // The i++ first returns and then increases
+                textArray[i++] = new Text(v);
             }
         }
 
