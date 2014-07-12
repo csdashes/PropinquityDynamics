@@ -359,7 +359,8 @@ public class PDVertex extends Vertex<Text, NullWritable, MapWritable> {
 
                     if (Nr.contains(senderVertexId)) {
                         //calculate RR
-                        Set<String> RRList = calculateRR(this.Nr, new HashSet<>(Arrays.asList(messageValueNr.toStrings())));
+                        Set<String> RRList = calculateRR(this.Nr, 
+                                new HashSet<>(Arrays.asList(messageValueNr.toStrings())));
                         //calculate RI
                         Set<String> RIList = calculateRI(this.Nr, this.Ni,
                                 new HashSet<>(Arrays.asList(messageValueNr.toStrings())),
