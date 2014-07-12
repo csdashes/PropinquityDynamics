@@ -244,45 +244,43 @@ public class PDVertex extends Vertex<Text, NullWritable, MapWritable> {
                 this.updatePropinquity(this.Ni, UpdatePropinquity.INCREASE);
                 this.updatePropinquity(this.Nd, UpdatePropinquity.DECREASE);
 
+                Text incr = new Text("PU+");
+                Text decr = new Text("PU-");
                 for (String vertex : this.Nr) {
+                    Text target = new Text(vertex);
                     MapWritable outMsg = new MapWritable();
 
-                    outMsg.put(new Text("PU+"), new MyTextArrayWritable(Ni.toArray(new String[0])));
-                    this.sendMessage(new Text(vertex), outMsg);
+                    outMsg.put(incr, new MyTextArrayWritable(this.Ni.toArray(new String[0])));
+                    this.sendMessage(target, outMsg);
 
                     outMsg = new MapWritable();
 
-                    outMsg.put(new Text("PU-"), new MyTextArrayWritable(Nd.toArray(new String[0])));
-                    this.sendMessage(new Text(vertex), outMsg);
+                    outMsg.put(decr, new MyTextArrayWritable(this.Nd.toArray(new String[0])));
+                    this.sendMessage(target, outMsg);
                 }
                 for (String vertex : this.Ni) {
+                    Text target = new Text(vertex);
                     MapWritable outMsg = new MapWritable();
 
-                    outMsg.put(new Text("PU+"), new MyTextArrayWritable(Nr.toArray(new String[0])));
-                    this.sendMessage(new Text(vertex), outMsg);
+                    outMsg.put(incr, new MyTextArrayWritable(this.Nr.toArray(new String[0])));
+                    this.sendMessage(target, outMsg);
 
                     outMsg = new MapWritable();
 
-                    Set<String> tmp = new HashSet<>(Ni);
-                    tmp.remove(vertex);
-
-                    outMsg.put(new Text("PU+"), new MyTextArrayWritable(tmp.toArray(new String[0])));
-                    this.sendMessage(new Text(vertex), outMsg);
-
+                    outMsg.put(incr, new MyTextArrayWritable(this.Ni.toArray(new String[0]), vertex));
+                    this.sendMessage(target, outMsg);
                 }
                 for (String vertex : this.Nd) {
+                    Text target = new Text(vertex);
                     MapWritable outMsg = new MapWritable();
 
-                    outMsg.put(new Text("PU-"), new MyTextArrayWritable(Nr.toArray(new String[0])));
-                    this.sendMessage(new Text(vertex), outMsg);
+                    outMsg.put(decr, new MyTextArrayWritable(this.Nr.toArray(new String[0])));
+                    this.sendMessage(target, outMsg);
 
                     outMsg = new MapWritable();
 
-                    Set<String> tmp = new HashSet<>(Nd);
-                    tmp.remove(vertex);
-
-                    outMsg.put(new Text("PU-"), new MyTextArrayWritable(tmp.toArray(new String[0])));
-                    this.sendMessage(new Text(vertex), outMsg);
+                    outMsg.put(decr, new MyTextArrayWritable(this.Nd.toArray(new String[0]), vertex));
+                    this.sendMessage(target, outMsg);
                 }
                 break;
             case 1:
