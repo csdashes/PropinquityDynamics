@@ -112,6 +112,16 @@ public class PDVertex extends Vertex<Text, NullWritable, MapWritable> {
                 }
                 break;
             case 2:
+                // Set Nr to our neighbors
+                for (Edge<Text, NullWritable> edge : this.getEdges()) {
+                    Nr.add(edge.getDestinationVertexID().toString());
+                }
+
+                /* The paper algorithm does not include the propinquity
+                 * increase of the direct neighbours
+                 */
+                this.updatePropinquity(this.Nr, UpdatePropinquity.INCREASE);
+
                 /* ==== Initialize angle propinquity ====
                  * The goal is to increase the propinquity between 2 
                  * vertexes according to the amoung of the common neighboors
@@ -121,10 +131,6 @@ public class PDVertex extends Vertex<Text, NullWritable, MapWritable> {
                  * that for the vertexes of the Set, the sender vertex is
                  * a common neighboor.
                  */
-                for (Edge<Text, NullWritable> edge : this.getEdges()) {
-                    Nr.add(edge.getDestinationVertexID().toString());
-                }
-
                 String[] NrAr = Nr.toArray(new String[0]);
 
                 outMsg = new MapWritable();
