@@ -447,11 +447,7 @@ public class PDVertex extends Vertex<Text, NullWritable, MapWritable> {
 
                 // NOT! NR ← NR + ND
                 // BUT! NR ← NR + NI
-                if (Nr.size() > Ni.size()) {
-                    Nr = Sets.union(Ni, Nr).copyInto(new HashSet<String>(50));
-                } else {
-                    Nr = Sets.union(Nr, Ni).copyInto(new HashSet<String>(50));
-                }
+                this.Nr.addAll(this.Ni);
                 break;
         }
 
