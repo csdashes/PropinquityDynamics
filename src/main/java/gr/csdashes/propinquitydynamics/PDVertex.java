@@ -17,7 +17,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.MapWritable;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.hama.graph.Edge;
@@ -27,7 +26,7 @@ import org.apache.hama.graph.Vertex;
  *
  * @author Anastasis Andronidis <anastasis90@yahoo.gr>
  */
-public class PDVertex extends Vertex<Text, NullWritable, MapWritable> {
+public class PDVertex extends Vertex<Text, IntWritable, MapWritable> {
 
     Set<String> Nr = new HashSet<>(50); // The remaining neighboors
     Set<String> Ni = new HashSet<>(50); // The neighboors to be insterted
@@ -35,9 +34,9 @@ public class PDVertex extends Vertex<Text, NullWritable, MapWritable> {
     // The propinquity value map
     Map<String, Integer> P = new HashMap<>(150);
     //cutting thresshold
-    int a = 9;
+    int a = 1;
     //emerging value
-    int b = 9;
+    int b = 7;
 
     private Step mainStep = new Step(2);
     private Step initializeStep = new Step(6);
@@ -96,23 +95,23 @@ public class PDVertex extends Vertex<Text, NullWritable, MapWritable> {
                 this.sendMessageToNeighbors(outMsg);
                 break;
             case 1:
-                List<Edge<Text, NullWritable>> edges = this.getEdges();
+                List<Edge<Text, IntWritable>> edges = this.getEdges();
                 Set<String> uniqueEdges = new HashSet<>(50);
-                for (Edge<Text, NullWritable> edge : edges) {
+                for (Edge<Text, IntWritable> edge : edges) {
                     uniqueEdges.add(edge.getDestinationVertexID().toString());
                 }
                 k = new Text("init");
                 for (MapWritable message : messages) {
                     Text id = (Text) message.get(k);
                     if (uniqueEdges.add(id.toString())) {
-                        Edge<Text, NullWritable> e = new Edge<>(id, null);
+                        Edge<Text, IntWritable> e = new Edge<>(id, new IntWritable(0));
                         this.addEdge(e);
                     }
                 }
                 break;
             case 2:
                 // Set Nr to our neighbors
-                for (Edge<Text, NullWritable> edge : this.getEdges()) {
+                for (Edge<Text, IntWritable> edge : this.getEdges()) {
                     Nr.add(edge.getDestinationVertexID().toString());
                 }
 
@@ -462,7 +461,7 @@ public class PDVertex extends Vertex<Text, NullWritable, MapWritable> {
     private void redistributeEdges() {
         this.setEdges(null);
         for (String e : this.Nr) {
-            this.addEdge(new Edge<Text, NullWritable>(new Text(e), null));
+            this.addEdge(new Edge<>(new Text(e), new IntWritable(0)));
         }
         voteToHalt();
     }

@@ -31,7 +31,7 @@ public class PDVertexWriter<KEYOUT extends Writable, VALUEOUT extends Writable, 
     public void write(Vertex<V, E, M> vertex, BSPPeer<Writable, Writable, KEYOUT, VALUEOUT, GraphJobMessage> peer) throws IOException {
         String s = "", prefix = "", delimeter = " ";
         for (Edge<V, E> e : vertex.getEdges()) {
-            s += prefix + e.getDestinationVertexID();
+            s += prefix + e.getDestinationVertexID() + "," + e.getValue().toString();
             prefix = delimeter;
         }
         peer.write((KEYOUT) vertex.getVertexID(), 

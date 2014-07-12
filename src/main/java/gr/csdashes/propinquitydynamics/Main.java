@@ -5,9 +5,9 @@ import gr.csdashes.propinquitydynamics.io.PDVertexWriter;
 import java.io.IOException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.MapWritable;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hama.HamaConfiguration;
 import org.apache.hama.bsp.HashPartitioner;
@@ -52,7 +52,7 @@ public class Main {
 
         graphJob.setVertexIDClass(Text.class);
         graphJob.setVertexValueClass(MapWritable.class);
-        graphJob.setEdgeValueClass(NullWritable.class);
+        graphJob.setEdgeValueClass(IntWritable.class);
 
         graphJob.setInputFormat(TextInputFormat.class);
         graphJob.setInputKeyClass(LongWritable.class);
