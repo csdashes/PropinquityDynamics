@@ -131,12 +131,10 @@ public class PDVertex extends Vertex<Text, NullWritable, MapWritable> {
                  * that for the vertexes of the Set, the sender vertex is
                  * a common neighboor.
                  */
-                String[] NrAr = Nr.toArray(new String[0]);
-
                 outMsg = new MapWritable();
                 k = new Text("Nr");
-                for (String v : NrAr) {
-                    outMsg.put(k, new MyTextArrayWritable(NrAr, v));
+                for (String v : this.Nr) {
+                    outMsg.put(k, new MyTextArrayWritable(this.Nr, v));
 
                     this.sendMessage(new Text(v), outMsg);
                     outMsg = new MapWritable();
@@ -160,13 +158,11 @@ public class PDVertex extends Vertex<Text, NullWritable, MapWritable> {
                  * To achive only one way communication, a function that compairs
                  * the vertex ids is being used.
                  */
-                NrAr = Nr.toArray(new String[0]);
-
                 outMsg = new MapWritable();
                 Integer id = Integer.parseInt(this.getVertexID().toString());
-                for (String neighboor : NrAr) {
+                for (String neighboor : this.Nr) {
                     if (Integer.parseInt(neighboor) > id) {
-                        outMsg.put(k, new MyTextArrayWritable(NrAr, neighboor));
+                        outMsg.put(k, new MyTextArrayWritable(this.Nr, neighboor));
                         this.sendMessage(new Text(neighboor), outMsg);
                     }
                 }
@@ -193,7 +189,7 @@ public class PDVertex extends Vertex<Text, NullWritable, MapWritable> {
                         messageList.remove(vertex);
 
                         if (!messageList.isEmpty()) {
-                            MyTextArrayWritable aw = new MyTextArrayWritable(messageList.toArray(new String[0]));
+                            MyTextArrayWritable aw = new MyTextArrayWritable(messageList);
                             outMsg = new MapWritable();
                             outMsg.put(k, aw);
                             this.sendMessage(new Text(vertex), outMsg);
@@ -250,36 +246,36 @@ public class PDVertex extends Vertex<Text, NullWritable, MapWritable> {
                     Text target = new Text(vertex);
                     MapWritable outMsg = new MapWritable();
 
-                    outMsg.put(incr, new MyTextArrayWritable(this.Ni.toArray(new String[0])));
+                    outMsg.put(incr, new MyTextArrayWritable(this.Ni));
                     this.sendMessage(target, outMsg);
 
                     outMsg = new MapWritable();
 
-                    outMsg.put(decr, new MyTextArrayWritable(this.Nd.toArray(new String[0])));
+                    outMsg.put(decr, new MyTextArrayWritable(this.Nd));
                     this.sendMessage(target, outMsg);
                 }
                 for (String vertex : this.Ni) {
                     Text target = new Text(vertex);
                     MapWritable outMsg = new MapWritable();
 
-                    outMsg.put(incr, new MyTextArrayWritable(this.Nr.toArray(new String[0])));
+                    outMsg.put(incr, new MyTextArrayWritable(this.Nr));
                     this.sendMessage(target, outMsg);
 
                     outMsg = new MapWritable();
 
-                    outMsg.put(incr, new MyTextArrayWritable(this.Ni.toArray(new String[0]), vertex));
+                    outMsg.put(incr, new MyTextArrayWritable(this.Ni, vertex));
                     this.sendMessage(target, outMsg);
                 }
                 for (String vertex : this.Nd) {
                     Text target = new Text(vertex);
                     MapWritable outMsg = new MapWritable();
 
-                    outMsg.put(decr, new MyTextArrayWritable(this.Nr.toArray(new String[0])));
+                    outMsg.put(decr, new MyTextArrayWritable(this.Nr));
                     this.sendMessage(target, outMsg);
 
                     outMsg = new MapWritable();
 
-                    outMsg.put(decr, new MyTextArrayWritable(this.Nd.toArray(new String[0]), vertex));
+                    outMsg.put(decr, new MyTextArrayWritable(this.Nd, vertex));
                     this.sendMessage(target, outMsg);
                 }
                 break;
@@ -307,9 +303,9 @@ public class PDVertex extends Vertex<Text, NullWritable, MapWritable> {
                         MapWritable outMsg = new MapWritable();
 
                         outMsg.put(sender, this.getVertexID());
-                        outMsg.put(dnNr, new MyTextArrayWritable(this.Nr.toArray(new String[0])));
-                        outMsg.put(dnNi, new MyTextArrayWritable(this.Ni.toArray(new String[0])));
-                        outMsg.put(dnNd, new MyTextArrayWritable(this.Nd.toArray(new String[0])));
+                        outMsg.put(dnNr, new MyTextArrayWritable(this.Nr));
+                        outMsg.put(dnNi, new MyTextArrayWritable(this.Ni));
+                        outMsg.put(dnNd, new MyTextArrayWritable(this.Nd));
                         this.sendMessage(new Text(vertex), outMsg);
                     }
                 }
@@ -318,8 +314,8 @@ public class PDVertex extends Vertex<Text, NullWritable, MapWritable> {
                         MapWritable outMsg = new MapWritable();
 
                         outMsg.put(sender, this.getVertexID());
-                        outMsg.put(dnNr, new MyTextArrayWritable(this.Nr.toArray(new String[0])));
-                        outMsg.put(dnNi, new MyTextArrayWritable(this.Ni.toArray(new String[0])));
+                        outMsg.put(dnNr, new MyTextArrayWritable(this.Nr));
+                        outMsg.put(dnNi, new MyTextArrayWritable(this.Ni));
                         this.sendMessage(new Text(vertex), outMsg);
                     }
                 }
@@ -328,8 +324,8 @@ public class PDVertex extends Vertex<Text, NullWritable, MapWritable> {
                         MapWritable outMsg = new MapWritable();
 
                         outMsg.put(sender, this.getVertexID());
-                        outMsg.put(dnNr, new MyTextArrayWritable(this.Nr.toArray(new String[0])));
-                        outMsg.put(dnNd, new MyTextArrayWritable(this.Nd.toArray(new String[0])));
+                        outMsg.put(dnNr, new MyTextArrayWritable(this.Nr));
+                        outMsg.put(dnNd, new MyTextArrayWritable(this.Nd));
                         this.sendMessage(new Text(vertex), outMsg);
                     }
                 }
@@ -373,34 +369,34 @@ public class PDVertex extends Vertex<Text, NullWritable, MapWritable> {
                         for (String vertex : RRList) {
                             MapWritable outMsg = new MapWritable();
 
-                            outMsg.put(incr, new MyTextArrayWritable(RIList.toArray(new String[0])));
+                            outMsg.put(incr, new MyTextArrayWritable(RIList));
                             this.sendMessage(new Text(vertex), outMsg);
 
                             outMsg = new MapWritable();
 
-                            outMsg.put(decr, new MyTextArrayWritable(RDList.toArray(new String[0])));
+                            outMsg.put(decr, new MyTextArrayWritable(RDList));
                             this.sendMessage(new Text(vertex), outMsg);
                         }
                         for (String vertex : RIList) {
                             MapWritable outMsg = new MapWritable();
 
-                            outMsg.put(incr, new MyTextArrayWritable(RRList.toArray(new String[0])));
+                            outMsg.put(incr, new MyTextArrayWritable(RRList));
                             this.sendMessage(new Text(vertex), outMsg);
 
                             outMsg = new MapWritable();
 
-                            outMsg.put(incr, new MyTextArrayWritable(RIList.toArray(new String[0]), vertex));
+                            outMsg.put(incr, new MyTextArrayWritable(RIList, vertex));
                             this.sendMessage(new Text(vertex), outMsg);
                         }
                         for (String vertex : RDList) {
                             MapWritable outMsg = new MapWritable();
 
-                            outMsg.put(decr, new MyTextArrayWritable(RRList.toArray(new String[0])));
+                            outMsg.put(decr, new MyTextArrayWritable(RRList));
                             this.sendMessage(new Text(vertex), outMsg);
 
                             outMsg = new MapWritable();
 
-                            outMsg.put(decr, new MyTextArrayWritable(RDList.toArray(new String[0]), vertex));
+                            outMsg.put(decr, new MyTextArrayWritable(RDList, vertex));
                             this.sendMessage(new Text(vertex), outMsg);
                         }
                     }
@@ -412,7 +408,7 @@ public class PDVertex extends Vertex<Text, NullWritable, MapWritable> {
                         for (String vertex : RIList) {
                             MapWritable outMsg = new MapWritable();
 
-                            outMsg.put(incr, new MyTextArrayWritable(RIList.toArray(new String[0]), vertex));
+                            outMsg.put(incr, new MyTextArrayWritable(RIList, vertex));
                             this.sendMessage(new Text(vertex), outMsg);
                         }
                     }
@@ -424,7 +420,7 @@ public class PDVertex extends Vertex<Text, NullWritable, MapWritable> {
                         for (String vertex : RDList) {
                             MapWritable outMsg = new MapWritable();
 
-                            outMsg.put(decr, new MyTextArrayWritable(RDList.toArray(new String[0]), vertex));
+                            outMsg.put(decr, new MyTextArrayWritable(RDList, vertex));
                             this.sendMessage(new Text(vertex), outMsg);
                         }
                     }
@@ -555,9 +551,9 @@ public class PDVertex extends Vertex<Text, NullWritable, MapWritable> {
         }
         valueMap.put(new Text("P"), Pmap);
 
-        valueMap.put(new Text("Nr"), new MyTextArrayWritable(this.Nr.toArray(new String[0])));
-        valueMap.put(new Text("Ni"), new MyTextArrayWritable(this.Ni.toArray(new String[0])));
-        valueMap.put(new Text("Nd"), new MyTextArrayWritable(this.Nd.toArray(new String[0])));
+        valueMap.put(new Text("Nr"), new MyTextArrayWritable(this.Nr));
+        valueMap.put(new Text("Ni"), new MyTextArrayWritable(this.Ni));
+        valueMap.put(new Text("Nd"), new MyTextArrayWritable(this.Nd));
 
         valueMap.put(new Text("incrementalStep"), this.incrementalStep);
         valueMap.put(new Text("initializeStep"), this.initializeStep);
