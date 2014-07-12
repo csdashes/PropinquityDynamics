@@ -389,9 +389,7 @@ public class PDVertex extends Vertex<Text, NullWritable, MapWritable> {
 
                             outMsg = new MapWritable();
 
-                            Set<String> tmp = new HashSet<>(RIList);
-                            tmp.remove(vertex);
-                            outMsg.put(incr, new MyTextArrayWritable(tmp.toArray(new String[0])));
+                            outMsg.put(incr, new MyTextArrayWritable(RIList.toArray(new String[0]), vertex));
                             this.sendMessage(new Text(vertex), outMsg);
                         }
                         for (String vertex : RDList) {
@@ -402,9 +400,7 @@ public class PDVertex extends Vertex<Text, NullWritable, MapWritable> {
 
                             outMsg = new MapWritable();
 
-                            Set<String> tmp = new HashSet<>(RDList);
-                            tmp.remove(vertex);
-                            outMsg.put(decr, new MyTextArrayWritable(tmp.toArray(new String[0])));
+                            outMsg.put(decr, new MyTextArrayWritable(RDList.toArray(new String[0]), vertex));
                             this.sendMessage(new Text(vertex), outMsg);
                         }
                     }
@@ -416,9 +412,7 @@ public class PDVertex extends Vertex<Text, NullWritable, MapWritable> {
                         for (String vertex : RIList) {
                             MapWritable outMsg = new MapWritable();
 
-                            Set<String> tmp = new HashSet<>(RIList);
-                            tmp.remove(vertex);
-                            outMsg.put(incr, new MyTextArrayWritable(tmp.toArray(new String[0])));
+                            outMsg.put(incr, new MyTextArrayWritable(RIList.toArray(new String[0]), vertex));
                             this.sendMessage(new Text(vertex), outMsg);
                         }
                     }
@@ -430,9 +424,7 @@ public class PDVertex extends Vertex<Text, NullWritable, MapWritable> {
                         for (String vertex : RDList) {
                             MapWritable outMsg = new MapWritable();
 
-                            Set<String> tmp = new HashSet<>(RDList);
-                            tmp.remove(vertex);
-                            outMsg.put(decr, new MyTextArrayWritable(tmp.toArray(new String[0])));
+                            outMsg.put(decr, new MyTextArrayWritable(RDList.toArray(new String[0]), vertex));
                             this.sendMessage(new Text(vertex), outMsg);
                         }
                     }
