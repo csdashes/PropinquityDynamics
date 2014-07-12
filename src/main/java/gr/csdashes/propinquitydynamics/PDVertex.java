@@ -221,6 +221,7 @@ public class PDVertex extends Vertex<Text, NullWritable, MapWritable> {
 
         switch (this.incrementalStep.getStep()) {
             case 0:
+                int terminateCond = 0;
                 this.Ni.clear();
                 this.Nd.clear();
 
@@ -228,12 +229,21 @@ public class PDVertex extends Vertex<Text, NullWritable, MapWritable> {
                     if (entry.getValue() <= a && Nr.contains(entry.getKey())) {
                         Nd.add(entry.getKey());
                         Nr.remove(entry.getKey());
+                        terminateCond++;
                     }
                     if (entry.getValue() >= b && !Nr.contains(entry.getKey())) {
                         Ni.add(entry.getKey());
+                        terminateCond++;
                     }
                 }
-                
+
+                // If we don't have any additions on Ni and Nd, we can vote to
+                // halt.
+                if (terminateCond == 0) {
+                    redistributeEdges();
+                    break;
+                }
+
                 // We take care of the direct connections here. If we delete a neightbor,
                 // we must decrease the propinquity etc...
                 this.updatePropinquity(this.Ni, UpdatePropinquity.INCREASE);
@@ -354,7 +364,7 @@ public class PDVertex extends Vertex<Text, NullWritable, MapWritable> {
 
                     if (this.Nr.contains(senderId)) {
                         //calculate RR
-                        Set<String> RRList = calculateRR(this.Nr, 
+                        Set<String> RRList = calculateRR(this.Nr,
                                 new HashSet<>(Arrays.asList(messageValueNr.toStrings())));
                         //calculate RI
                         Set<String> RIList = calculateRI(this.Nr, this.Ni,
@@ -463,46 +473,20 @@ public class PDVertex extends Vertex<Text, NullWritable, MapWritable> {
             this.deserialize();
         }
 
-        if (this.getVertexID().toString().equals("0")) {
-            //terminationCondition(messages);
-        } else {
-//            switch (this.mainStep.getStep()) {
-//                case 0:
-//                    initialize(messages);
-//                    break;
-//                case 1:
-//                    incremental(messages);
-//                    break;
-//            }
-
-            if (this.getSuperstepCount() < 6) {
+        switch (this.mainStep.getStep()) {
+            case 0:
                 initialize(messages);
-            } else if (this.getSuperstepCount() >= 100) {
-                redistributeEdges();
-            } else if (this.getSuperstepCount() > 8 //&& this.getSuperstepCount() < 13
-                    ) { //before it was > 8
+                break;
+            case 1:
                 incremental(messages);
-            }
+                break;
+        }
+
+        if (this.getSuperstepCount() >= 100) {
+            redistributeEdges();
         }
 
         this.serialize();
-    }
-
-    private void terminationCondition(Iterable<MapWritable> messages) throws IOException {
-        long term = 0L;
-        for (MapWritable m : messages) {
-            term += ((IntWritable) m.keySet().toArray()[0]).get();
-        }
-
-        if (term < 5) {
-            for (long i = 1; i < this.getNumVertices(); i++) {
-                MapWritable outMsg;
-                outMsg = new MapWritable();
-                outMsg.put(new Text("voteToHalt"), null);
-                this.sendMessage(new Text(String.valueOf(i)), outMsg);
-
-            }
-        }
     }
 
     private void deserialize() {
