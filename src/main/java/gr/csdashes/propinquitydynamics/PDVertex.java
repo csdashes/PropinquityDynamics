@@ -344,7 +344,7 @@ public class PDVertex extends Vertex<Text, NullWritable, MapWritable> {
                 dnNd = new Text("DN ND");
 
                 for (MapWritable message : messages) {
-                    String senderVertexId = ((Text) message.get(sender)).toString();
+                    String senderId = ((Text) message.get(sender)).toString();
 
                     MyTextArrayWritable messageValueNr = (MyTextArrayWritable) message.get(dnNr);
                     MyTextArrayWritable messageValueNi = (MyTextArrayWritable) message.get(dnNi);
@@ -357,7 +357,7 @@ public class PDVertex extends Vertex<Text, NullWritable, MapWritable> {
                         messageValueNd = new MyTextArrayWritable(new String[0]);
                     }
 
-                    if (this.Nr.contains(senderVertexId)) {
+                    if (this.Nr.contains(senderId)) {
                         //calculate RR
                         Set<String> RRList = calculateRR(this.Nr, 
                                 new HashSet<>(Arrays.asList(messageValueNr.toStrings())));
@@ -408,7 +408,7 @@ public class PDVertex extends Vertex<Text, NullWritable, MapWritable> {
                             this.sendMessage(new Text(vertex), outMsg);
                         }
                     }
-                    if (this.Ni.contains(senderVertexId)) {
+                    if (this.Ni.contains(senderId)) {
                         //calculate II
                         Set<String> RIList = calculateII(this.Nr, this.Ni,
                                 new HashSet<>(Arrays.asList(messageValueNr.toStrings())),
@@ -418,11 +418,11 @@ public class PDVertex extends Vertex<Text, NullWritable, MapWritable> {
 
                             Set<String> tmp = new HashSet<>(RIList);
                             tmp.remove(vertex);
-                            outMsg.put(new Text("UP+"), new MyTextArrayWritable(tmp.toArray(new String[0])));
+                            outMsg.put(incr, new MyTextArrayWritable(tmp.toArray(new String[0])));
                             this.sendMessage(new Text(vertex), outMsg);
                         }
                     }
-                    if (this.Nd.contains(senderVertexId)) {
+                    if (this.Nd.contains(senderId)) {
                         //calculate DD
                         Set<String> RDList = calculateDD(this.Nr, this.Nd,
                                 new HashSet<>(Arrays.asList(messageValueNr.toStrings())),
@@ -432,7 +432,7 @@ public class PDVertex extends Vertex<Text, NullWritable, MapWritable> {
 
                             Set<String> tmp = new HashSet<>(RDList);
                             tmp.remove(vertex);
-                            outMsg.put(new Text("UP-"), new MyTextArrayWritable(tmp.toArray(new String[0])));
+                            outMsg.put(decr, new MyTextArrayWritable(tmp.toArray(new String[0])));
                             this.sendMessage(new Text(vertex), outMsg);
                         }
                     }
