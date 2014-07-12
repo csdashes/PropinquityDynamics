@@ -1,6 +1,5 @@
 package gr.csdashes.propinquitydynamics;
 
-import com.google.common.collect.Sets;
 import static gr.csdashes.propinquitydynamics.CalculationTable.calculateDD;
 import static gr.csdashes.propinquitydynamics.CalculationTable.calculateII;
 import static gr.csdashes.propinquitydynamics.CalculationTable.calculateRD;
