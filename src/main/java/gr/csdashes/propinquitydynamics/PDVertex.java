@@ -163,10 +163,10 @@ public class PDVertex extends Vertex<Text, NullWritable, MapWritable> {
                 NrAr = Nr.toArray(new String[0]);
 
                 outMsg = new MapWritable();
+                Integer id = Integer.parseInt(this.getVertexID().toString());
                 for (String neighboor : NrAr) {
-                    String v = this.getVertexID().toString();
-                    if (Integer.parseInt(neighboor) > Integer.parseInt(v)) {
-                        outMsg.put(k, new MyTextArrayWritable(NrAr, v));
+                    if (Integer.parseInt(neighboor) > id) {
+                        outMsg.put(k, new MyTextArrayWritable(NrAr, neighboor));
                         this.sendMessage(new Text(neighboor), outMsg);
                     }
                 }
