@@ -298,7 +298,7 @@ public class PDVertex extends Vertex<Text, NullWritable, MapWritable> {
                     }
                 }
 
-                for (String vertex : Nr) {
+                for (String vertex : this.Nr) {
                     if (h(vertex) > h(this.getVertexID())) {
                         MapWritable outMsg = new MapWritable();
 
@@ -310,7 +310,7 @@ public class PDVertex extends Vertex<Text, NullWritable, MapWritable> {
                     }
                 }
 
-                for (String vertex : Ni) {
+                for (String vertex : this.Ni) {
                     if (h(vertex) > h(this.getVertexID())) {
                         MapWritable outMsg = new MapWritable();
 
@@ -321,7 +321,7 @@ public class PDVertex extends Vertex<Text, NullWritable, MapWritable> {
                     }
                 }
 
-                for (String vertex : Nd) {
+                for (String vertex : this.Nd) {
                     if (h(vertex) > h(this.getVertexID())) {
                         MapWritable outMsg = new MapWritable();
 
