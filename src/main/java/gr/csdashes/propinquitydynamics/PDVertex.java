@@ -238,6 +238,11 @@ public class PDVertex extends Vertex<Text, NullWritable, MapWritable> {
                         Ni.add(entry.getKey());
                     }
                 }
+                
+                // We take care of the direct connections here. If we delete a neightbor,
+                // we must decrease the propinquity etc...
+                this.updatePropinquity(this.Ni, UpdatePropinquity.INCREASE);
+                this.updatePropinquity(this.Nd, UpdatePropinquity.DECREASE);
 
                 for (String vertex : Nr) {
                     MapWritable outMsg = new MapWritable();
