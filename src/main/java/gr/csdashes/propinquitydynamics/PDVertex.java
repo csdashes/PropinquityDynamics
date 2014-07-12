@@ -244,7 +244,7 @@ public class PDVertex extends Vertex<Text, NullWritable, MapWritable> {
                 this.updatePropinquity(this.Ni, UpdatePropinquity.INCREASE);
                 this.updatePropinquity(this.Nd, UpdatePropinquity.DECREASE);
 
-                for (String vertex : Nr) {
+                for (String vertex : this.Nr) {
                     MapWritable outMsg = new MapWritable();
 
                     outMsg.put(new Text("PU+"), new MyTextArrayWritable(Ni.toArray(new String[0])));
@@ -255,7 +255,7 @@ public class PDVertex extends Vertex<Text, NullWritable, MapWritable> {
                     outMsg.put(new Text("PU-"), new MyTextArrayWritable(Nd.toArray(new String[0])));
                     this.sendMessage(new Text(vertex), outMsg);
                 }
-                for (String vertex : Ni) {
+                for (String vertex : this.Ni) {
                     MapWritable outMsg = new MapWritable();
 
                     outMsg.put(new Text("PU+"), new MyTextArrayWritable(Nr.toArray(new String[0])));
@@ -270,7 +270,7 @@ public class PDVertex extends Vertex<Text, NullWritable, MapWritable> {
                     this.sendMessage(new Text(vertex), outMsg);
 
                 }
-                for (String vertex : Nd) {
+                for (String vertex : this.Nd) {
                     MapWritable outMsg = new MapWritable();
 
                     outMsg.put(new Text("PU-"), new MyTextArrayWritable(Nr.toArray(new String[0])));
