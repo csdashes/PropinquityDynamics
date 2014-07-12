@@ -461,7 +461,7 @@ public class PDVertex extends Vertex<Text, IntWritable, MapWritable> {
     private void redistributeEdges() {
         this.setEdges(null);
         for (String e : this.Nr) {
-            this.addEdge(new Edge<>(new Text(e), new IntWritable(0)));
+            this.addEdge(new Edge<>(new Text(e), new IntWritable(this.P.get(e))));
         }
         voteToHalt();
     }
