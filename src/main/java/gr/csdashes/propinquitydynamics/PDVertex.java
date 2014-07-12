@@ -382,7 +382,7 @@ public class PDVertex extends Vertex<Text, NullWritable, MapWritable> {
 
                             Set<String> tmp = new HashSet<>(RIList);
                             tmp.remove(vertex);
-                            outMsg.put(new Text("UP-"), new MyTextArrayWritable(tmp.toArray(new String[0])));
+                            outMsg.put(new Text("UP+"), new MyTextArrayWritable(tmp.toArray(new String[0])));
                             this.sendMessage(new Text(vertex), outMsg);
                         }
                         for (String vertex : RDList) {
