@@ -335,12 +335,20 @@ public class PDVertex extends Vertex<Text, NullWritable, MapWritable> {
                 }
                 break;
             case 2:
-                for (MapWritable message : messages) {
-                    String senderVertexId = ((Text) message.get(new Text("Sender"))).toString();
+                incr = new Text("PU+");
+                decr = new Text("PU-");
 
-                    MyTextArrayWritable messageValueNr = (MyTextArrayWritable) message.get(new Text("DN NR"));
-                    MyTextArrayWritable messageValueNi = (MyTextArrayWritable) message.get(new Text("DN NI"));
-                    MyTextArrayWritable messageValueNd = (MyTextArrayWritable) message.get(new Text("DN ND"));
+                sender = new Text("Sender");
+                dnNr = new Text("DN NR");
+                dnNi = new Text("DN NI");
+                dnNd = new Text("DN ND");
+
+                for (MapWritable message : messages) {
+                    String senderVertexId = ((Text) message.get(sender)).toString();
+
+                    MyTextArrayWritable messageValueNr = (MyTextArrayWritable) message.get(dnNr);
+                    MyTextArrayWritable messageValueNi = (MyTextArrayWritable) message.get(dnNi);
+                    MyTextArrayWritable messageValueNd = (MyTextArrayWritable) message.get(dnNd);
 
                     if (messageValueNi == null) {
                         messageValueNi = new MyTextArrayWritable(new String[0]);
@@ -364,38 +372,38 @@ public class PDVertex extends Vertex<Text, NullWritable, MapWritable> {
                         for (String vertex : RRList) {
                             MapWritable outMsg = new MapWritable();
 
-                            outMsg.put(new Text("UP+"), new MyTextArrayWritable(RIList.toArray(new String[0])));
+                            outMsg.put(incr, new MyTextArrayWritable(RIList.toArray(new String[0])));
                             this.sendMessage(new Text(vertex), outMsg);
 
                             outMsg = new MapWritable();
 
-                            outMsg.put(new Text("UP-"), new MyTextArrayWritable(RDList.toArray(new String[0])));
+                            outMsg.put(decr, new MyTextArrayWritable(RDList.toArray(new String[0])));
                             this.sendMessage(new Text(vertex), outMsg);
                         }
                         for (String vertex : RIList) {
                             MapWritable outMsg = new MapWritable();
 
-                            outMsg.put(new Text("UP+"), new MyTextArrayWritable(RRList.toArray(new String[0])));
+                            outMsg.put(incr, new MyTextArrayWritable(RRList.toArray(new String[0])));
                             this.sendMessage(new Text(vertex), outMsg);
 
                             outMsg = new MapWritable();
 
                             Set<String> tmp = new HashSet<>(RIList);
                             tmp.remove(vertex);
-                            outMsg.put(new Text("UP+"), new MyTextArrayWritable(tmp.toArray(new String[0])));
+                            outMsg.put(incr, new MyTextArrayWritable(tmp.toArray(new String[0])));
                             this.sendMessage(new Text(vertex), outMsg);
                         }
                         for (String vertex : RDList) {
                             MapWritable outMsg = new MapWritable();
 
-                            outMsg.put(new Text("UP-"), new MyTextArrayWritable(RRList.toArray(new String[0])));
+                            outMsg.put(decr, new MyTextArrayWritable(RRList.toArray(new String[0])));
                             this.sendMessage(new Text(vertex), outMsg);
 
                             outMsg = new MapWritable();
 
                             Set<String> tmp = new HashSet<>(RDList);
                             tmp.remove(vertex);
-                            outMsg.put(new Text("UP-"), new MyTextArrayWritable(tmp.toArray(new String[0])));
+                            outMsg.put(decr, new MyTextArrayWritable(tmp.toArray(new String[0])));
                             this.sendMessage(new Text(vertex), outMsg);
                         }
                     }
