@@ -9,6 +9,7 @@ import static gr.csdashes.propinquitydynamics.CalculationTable.calculateRR;
 import gr.csdashes.propinquitydynamics.io.MyTextArrayWritable;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -56,7 +57,7 @@ public class PDVertex extends Vertex<Text, NullWritable, MapWritable> {
      * @param operation The enum that identifies the operation (INCREASE OR
      * DECREASE)
      */
-    private void updatePropinquity(List<String> vertexes, UpdatePropinquity operation) {
+    private void updatePropinquity(Collection<String> vertexes, UpdatePropinquity operation) {
         switch (operation) {
             case INCREASE:
                 for (String vertex : vertexes) {
