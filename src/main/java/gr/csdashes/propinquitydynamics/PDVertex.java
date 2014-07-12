@@ -298,36 +298,38 @@ public class PDVertex extends Vertex<Text, NullWritable, MapWritable> {
                     }
                 }
 
+                Text sender = new Text("Sender");
+                Text dnNr = new Text("DN NR");
+                Text dnNi = new Text("DN NI");
+                Text dnNd = new Text("DN ND");
                 for (String vertex : this.Nr) {
                     if (h(vertex) > h(this.getVertexID())) {
                         MapWritable outMsg = new MapWritable();
 
-                        outMsg.put(new Text("Sender"), this.getVertexID());
-                        outMsg.put(new Text("DN NR"), new MyTextArrayWritable(Nr.toArray(new String[0])));
-                        outMsg.put(new Text("DN NI"), new MyTextArrayWritable(Ni.toArray(new String[0])));
-                        outMsg.put(new Text("DN ND"), new MyTextArrayWritable(Nd.toArray(new String[0])));
+                        outMsg.put(sender, this.getVertexID());
+                        outMsg.put(dnNr, new MyTextArrayWritable(this.Nr.toArray(new String[0])));
+                        outMsg.put(dnNi, new MyTextArrayWritable(this.Ni.toArray(new String[0])));
+                        outMsg.put(dnNd, new MyTextArrayWritable(this.Nd.toArray(new String[0])));
                         this.sendMessage(new Text(vertex), outMsg);
                     }
                 }
-
                 for (String vertex : this.Ni) {
                     if (h(vertex) > h(this.getVertexID())) {
                         MapWritable outMsg = new MapWritable();
 
-                        outMsg.put(new Text("Sender"), this.getVertexID());
-                        outMsg.put(new Text("DN NR"), new MyTextArrayWritable(Nr.toArray(new String[0])));
-                        outMsg.put(new Text("DN NI"), new MyTextArrayWritable(Ni.toArray(new String[0])));
+                        outMsg.put(sender, this.getVertexID());
+                        outMsg.put(dnNr, new MyTextArrayWritable(this.Nr.toArray(new String[0])));
+                        outMsg.put(dnNi, new MyTextArrayWritable(this.Ni.toArray(new String[0])));
                         this.sendMessage(new Text(vertex), outMsg);
                     }
                 }
-
                 for (String vertex : this.Nd) {
                     if (h(vertex) > h(this.getVertexID())) {
                         MapWritable outMsg = new MapWritable();
 
-                        outMsg.put(new Text("Sender"), this.getVertexID());
-                        outMsg.put(new Text("DN NR"), new MyTextArrayWritable(Nr.toArray(new String[0])));
-                        outMsg.put(new Text("DN ND"), new MyTextArrayWritable(Nd.toArray(new String[0])));
+                        outMsg.put(sender, this.getVertexID());
+                        outMsg.put(dnNr, new MyTextArrayWritable(this.Nr.toArray(new String[0])));
+                        outMsg.put(dnNd, new MyTextArrayWritable(this.Nd.toArray(new String[0])));
                         this.sendMessage(new Text(vertex), outMsg);
                     }
                 }
