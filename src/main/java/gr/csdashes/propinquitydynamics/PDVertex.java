@@ -284,23 +284,17 @@ public class PDVertex extends Vertex<Text, NullWritable, MapWritable> {
                 }
                 break;
             case 1:
+                incr = new Text("PU+");
+                decr = new Text("PU-");
                 for (MapWritable message : messages) {
-                    if (message.containsKey(new Text("PU+"))) {
-                        MyTextArrayWritable aw = (MyTextArrayWritable) message.get(new Text("UP+"));
-                        if (aw == null) {
-                            aw = new MyTextArrayWritable(new String[0]);
-                        }
-                        List<String> messageArray = Arrays.asList((aw).toStrings());
+                    if (message.containsKey(incr)) {
+                        String[] s = ((MyTextArrayWritable) message.get(incr)).toStrings();
 
-                        updatePropinquity(messageArray, UpdatePropinquity.INCREASE);
-                    } else if (message.containsKey(new Text("PU-"))) {
-                        MyTextArrayWritable aw = (MyTextArrayWritable) message.get(new Text("UP-"));
-                        if (aw == null) {
-                            aw = new MyTextArrayWritable(new String[0]);
-                        }
-                        List<String> messageArray = Arrays.asList((aw).toStrings());
+                        updatePropinquity(Arrays.asList(s), UpdatePropinquity.INCREASE);
+                    } else if (message.containsKey(decr)) {
+                        String[] s = ((MyTextArrayWritable) message.get(decr)).toStrings();
 
-                        updatePropinquity(messageArray, UpdatePropinquity.DECREASE);
+                        updatePropinquity(Arrays.asList(s), UpdatePropinquity.DECREASE);
                     }
                 }
 
