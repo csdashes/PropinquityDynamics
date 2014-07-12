@@ -225,14 +225,14 @@ public class PDVertex extends Vertex<Text, NullWritable, MapWritable> {
                 this.Ni.clear();
                 this.Nd.clear();
 
-                for (Map.Entry<String, Integer> entry : P.entrySet()) {
-                    if (entry.getValue() <= a && Nr.contains(entry.getKey())) {
-                        Nd.add(entry.getKey());
-                        Nr.remove(entry.getKey());
+                for (Map.Entry<String, Integer> entry : this.P.entrySet()) {
+                    if (entry.getValue() <= this.a && this.Nr.contains(entry.getKey())) {
+                        this.Nd.add(entry.getKey());
+                        this.Nr.remove(entry.getKey());
                         terminateCond++;
                     }
-                    if (entry.getValue() >= b && !Nr.contains(entry.getKey())) {
-                        Ni.add(entry.getKey());
+                    if (entry.getValue() >= this.b && !this.Nr.contains(entry.getKey())) {
+                        this.Ni.add(entry.getKey());
                         terminateCond++;
                     }
                 }
@@ -461,7 +461,7 @@ public class PDVertex extends Vertex<Text, NullWritable, MapWritable> {
 
     private void redistributeEdges() {
         this.setEdges(null);
-        for (String e : Nr) {
+        for (String e : this.Nr) {
             this.addEdge(new Edge<Text, NullWritable>(new Text(e), null));
         }
         voteToHalt();
