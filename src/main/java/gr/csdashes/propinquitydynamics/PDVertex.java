@@ -229,8 +229,7 @@ public class PDVertex extends Vertex<Text, IntWritable, MapWritable> {
                         this.Nd.add(entry.getKey());
                         this.Nr.remove(entry.getKey());
                         terminateCond++;
-                    }
-                    if (entry.getValue() >= this.b && !this.Nr.contains(entry.getKey())) {
+                    } else if (entry.getValue() >= this.b && !this.Nr.contains(entry.getKey())) {
                         this.Ni.add(entry.getKey());
                         terminateCond++;
                     }
