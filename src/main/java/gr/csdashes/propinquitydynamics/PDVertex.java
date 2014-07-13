@@ -238,10 +238,10 @@ public class PDVertex extends Vertex<Text, IntWritable, MapWritable> {
 
                 // If we don't have any additions on Ni and Nd, we can vote to
                 // halt.
-//                if (terminateCond == 0) {
+                if (terminateCond == 0) {
 //                    redistributeEdges();
-//                    break;
-//                }
+                    break;
+                }
 
                 // We take care of the direct connections here. If we delete a neightbor,
                 // we must decrease the propinquity etc...
