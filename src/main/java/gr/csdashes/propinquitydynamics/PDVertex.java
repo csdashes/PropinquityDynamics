@@ -34,9 +34,9 @@ public class PDVertex extends Vertex<Text, IntWritable, MapWritable> {
     // The propinquity value map
     Map<String, Integer> P = new HashMap<>(150);
     //cutting thresshold
-    int a = 1;
+    int a;
     //emerging value
-    int b = 7;
+    int b;
 
     private Step mainStep = new Step(2);
     private Step initializeStep = new Step(6);
@@ -467,6 +467,9 @@ public class PDVertex extends Vertex<Text, IntWritable, MapWritable> {
 
     @Override
     public void compute(Iterable<MapWritable> messages) throws IOException {
+        this.a = this.getConf().getInt("a", 0);
+        this.b = this.getConf().getInt("b", 1000);
+
         if (this.getSuperstepCount() > 0) {
             this.deserialize();
         }
