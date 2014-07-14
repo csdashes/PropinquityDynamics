@@ -362,14 +362,14 @@ public class PDVertex extends Vertex<Text, IntWritable, MapWritable> {
 
                     if (this.Nr.contains(senderId)) {
                         //calculate RR
-                        Set<String> RRList = calculateRR(this.Nr,
+                        String[] RRList = calculateRR(this.Nr,
                                 new HashSet<>(Arrays.asList(messageValueNr.toStrings())));
                         //calculate RI
-                        Set<String> RIList = calculateRI(this.Nr, this.Ni,
+                        String[] RIList = calculateRI(this.Nr, this.Ni,
                                 new HashSet<>(Arrays.asList(messageValueNr.toStrings())),
                                 new HashSet<>(Arrays.asList(messageValueNi.toStrings())));
                         //calculate RD
-                        Set<String> RDList = calculateRD(this.Nr, this.Nd,
+                        String[] RDList = calculateRD(this.Nr, this.Nd,
                                 new HashSet<>(Arrays.asList(messageValueNr.toStrings())),
                                 new HashSet<>(Arrays.asList(messageValueNd.toStrings())));
 
@@ -409,7 +409,7 @@ public class PDVertex extends Vertex<Text, IntWritable, MapWritable> {
                     }
                     if (this.Ni.contains(senderId)) {
                         //calculate II
-                        Set<String> RIList = calculateII(this.Nr, this.Ni,
+                        String[] RIList = calculateII(this.Nr, this.Ni,
                                 new HashSet<>(Arrays.asList(messageValueNr.toStrings())),
                                 new HashSet<>(Arrays.asList(messageValueNi.toStrings())));
                         for (String vertex : RIList) {
@@ -421,7 +421,7 @@ public class PDVertex extends Vertex<Text, IntWritable, MapWritable> {
                     }
                     if (this.Nd.contains(senderId)) {
                         //calculate DD
-                        Set<String> RDList = calculateDD(this.Nr, this.Nd,
+                        String[] RDList = calculateDD(this.Nr, this.Nd,
                                 new HashSet<>(Arrays.asList(messageValueNr.toStrings())),
                                 new HashSet<>(Arrays.asList(messageValueNd.toStrings())));
                         for (String vertex : RDList) {

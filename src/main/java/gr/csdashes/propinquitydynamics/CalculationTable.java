@@ -10,15 +10,15 @@ import java.util.Set;
  */
 public class CalculationTable {
 
-    public static Set<String> calculateRR(Set<String> Nr, Set<String> nr) {
+    public static String[] calculateRR(Set<String> Nr, Set<String> nr) {
 
         if (Nr.size() > nr.size()) {
-            return Sets.intersection(nr, Nr).copyInto(new HashSet<String>(50));
+            return Sets.intersection(nr, Nr).toArray(new String[0]);
         }
-        return Sets.intersection(Nr, nr).copyInto(new HashSet<String>(50));
+        return Sets.intersection(Nr, nr).toArray(new String[0]);
     }
 
-    public static Set<String> calculateII(Set<String> Nr, Set<String> Ni, Set<String> nr, Set<String> ni) {
+    public static String[] calculateII(Set<String> Nr, Set<String> Ni, Set<String> nr, Set<String> ni) {
 
         Set<String> t1;
         if (Nr.size() > Ni.size()) {
@@ -35,13 +35,13 @@ public class CalculationTable {
         }
 
         if (t1.size() > t2.size()) {
-            return Sets.intersection(t2, t1).copyInto(new HashSet<String>(50));
+            return Sets.intersection(t2, t1).toArray(new String[0]);
         }
 
-        return Sets.intersection(t1, t2).copyInto(new HashSet<String>(50));
+        return Sets.intersection(t1, t2).toArray(new String[0]);
     }
 
-    public static Set<String> calculateDD(Set<String> Nr, Set<String> Nd, Set<String> nr, Set<String> nd) {
+    public static String[] calculateDD(Set<String> Nr, Set<String> Nd, Set<String> nr, Set<String> nd) {
 
         Set<String> t1;
         if (Nr.size() > Nd.size()) {
@@ -58,13 +58,13 @@ public class CalculationTable {
         }
 
         if (t1.size() > t2.size()) {
-            return Sets.intersection(t2, t1).copyInto(new HashSet<String>(50));
+            return Sets.intersection(t2, t1).toArray(new String[0]);
         }
 
-        return Sets.intersection(t1, t2).copyInto(new HashSet<String>(50));
+        return Sets.intersection(t1, t2).toArray(new String[0]);
     }
 
-    public static Set<String> calculateRI(Set<String> Nr, Set<String> Ni, Set<String> nr, Set<String> ni) {
+    public static String[] calculateRI(Set<String> Nr, Set<String> Ni, Set<String> nr, Set<String> ni) {
 
         Set<String> t1;
         if (Nr.size() > ni.size()) {
@@ -95,13 +95,13 @@ public class CalculationTable {
         }
 
         if (u1.size() > t3.size()) {
-            return Sets.union(t3, u1).copyInto(new HashSet<String>(50));
+            return Sets.union(t3, u1).toArray(new String[0]);
         }
 
-        return Sets.union(u1, t3).copyInto(new HashSet<String>(50));
+        return Sets.union(u1, t3).toArray(new String[0]);
     }
 
-    public static Set<String> calculateRD(Set<String> Nr, Set<String> Nd, Set<String> nr, Set<String> nd) {
+    public static String[] calculateRD(Set<String> Nr, Set<String> Nd, Set<String> nr, Set<String> nd) {
 
         Set<String> t1;
         if (Nr.size() > nd.size()) {
@@ -132,9 +132,9 @@ public class CalculationTable {
         }
 
         if (u1.size() > t3.size()) {
-            return Sets.union(t3, u1).copyInto(new HashSet<String>(50));
+            return Sets.union(t3, u1).toArray(new String[0]);
         }
 
-        return Sets.union(u1, t3).copyInto(new HashSet<String>(50));
+        return Sets.union(u1, t3).toArray(new String[0]);
     }
 }
