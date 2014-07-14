@@ -41,7 +41,7 @@ public class MyTextArrayWritable extends ArrayWritable {
 
         this.set(textArray);
     }
-    
+
     public MyTextArrayWritable(Collection<String> values) {
         super(Text.class);
         Text[] textArray = new Text[values.size()];
@@ -52,10 +52,10 @@ public class MyTextArrayWritable extends ArrayWritable {
 
         this.set(textArray);
     }
-    
+
     public MyTextArrayWritable(Collection<String> values, String skipString) {
         super(Text.class);
-        Text[] textArray = new Text[values.size()-1];
+        Text[] textArray = new Text[values.size() - 1];
         int i = 0;
         for (String v : values) {
             if (!v.equals(skipString)) {
