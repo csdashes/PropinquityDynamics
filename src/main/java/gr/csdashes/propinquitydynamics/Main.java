@@ -50,7 +50,7 @@ public class Main {
         graphJob.setVertexClass(PDVertex.class);
         graphJob.setJar("PropinquityDynamics-1.0-SNAPSHOT.jar");
 
-        if (!args[4].isEmpty()) {
+        if (args.length == 5 && !args[4].isEmpty()) {
             graphJob.setNumBspTask(Integer.parseInt(args[4]));
         } else {
             graphJob.setNumBspTask(10);
