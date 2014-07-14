@@ -65,4 +65,12 @@ public class MyTextArrayWritable extends ArrayWritable {
 
         this.set(textArray);
     }
+
+    public int size() {
+        return super.get().length;
+    }
+
+    public boolean isEmpty() {
+        return super.get().length == 0;
+    }
 }
