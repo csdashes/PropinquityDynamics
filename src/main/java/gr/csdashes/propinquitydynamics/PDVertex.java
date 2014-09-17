@@ -409,25 +409,25 @@ public class PDVertex extends Vertex<Text, IntWritable, MapWritable> {
                     }
                     if (this.Ni.contains(senderId)) {
                         //calculate II
-                        String[] RIList = calculateII(this.Nr, this.Ni,
+                        String[] IIList = calculateII(this.Nr, this.Ni,
                                 new HashSet<>(Arrays.asList(messageValueNr.toStrings())),
                                 new HashSet<>(Arrays.asList(messageValueNi.toStrings())));
-                        for (String vertex : RIList) {
+                        for (String vertex : IIList) {
                             MapWritable outMsg = new MapWritable();
 
-                            outMsg.put(incr, new MyTextArrayWritable(RIList, vertex));
+                            outMsg.put(incr, new MyTextArrayWritable(IIList, vertex));
                             this.sendMessage(new Text(vertex), outMsg);
                         }
                     }
                     if (this.Nd.contains(senderId)) {
                         //calculate DD
-                        String[] RDList = calculateDD(this.Nr, this.Nd,
+                        String[] DDList = calculateDD(this.Nr, this.Nd,
                                 new HashSet<>(Arrays.asList(messageValueNr.toStrings())),
                                 new HashSet<>(Arrays.asList(messageValueNd.toStrings())));
-                        for (String vertex : RDList) {
+                        for (String vertex : DDList) {
                             MapWritable outMsg = new MapWritable();
 
-                            outMsg.put(decr, new MyTextArrayWritable(RDList, vertex));
+                            outMsg.put(decr, new MyTextArrayWritable(DDList, vertex));
                             this.sendMessage(new Text(vertex), outMsg);
                         }
                     }
