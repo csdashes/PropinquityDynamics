@@ -1,7 +1,6 @@
 package gr.csdashes.propinquitydynamics;
 
 import com.google.common.collect.Sets;
-import java.util.HashSet;
 import java.util.Set;
 
 /**
