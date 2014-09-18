@@ -1,4 +1,4 @@
-package gr.csdashes.propinquitydynamicsnostrings.io;
+package testing;
 
 import java.util.Arrays;
 import java.util.Collection;
