@@ -9,15 +9,15 @@ import java.util.Set;
  */
 public class CalculationTable {
 
-    public static Integer[] calculateRR(Set<Integer> Nr, Set<Integer> nr) {
+    public static Set<Integer> calculateRR(Set<Integer> Nr, Set<Integer> nr) {
 
         if (Nr.size() > nr.size()) {
-            return Sets.intersection(nr, Nr).toArray(new Integer[0]);
+            return Sets.intersection(nr, Nr);
         }
-        return Sets.intersection(Nr, nr).toArray(new Integer[0]);
+        return Sets.intersection(Nr, nr);
     }
 
-    public static Integer[] calculateII(Set<Integer> Nr, Set<Integer> Ni, Set<Integer> nr, Set<Integer> ni) {
+    public static Set<Integer> calculateII(Set<Integer> Nr, Set<Integer> Ni, Set<Integer> nr, Set<Integer> ni) {
 
         Set<Integer> t1;
         if (Nr.size() > Ni.size()) {
@@ -34,13 +34,13 @@ public class CalculationTable {
         }
 
         if (t1.size() > t2.size()) {
-            return Sets.intersection(t2, t1).toArray(new Integer[0]);
+            return Sets.intersection(t2, t1);
         }
 
-        return Sets.intersection(t1, t2).toArray(new Integer[0]);
+        return Sets.intersection(t1, t2);
     }
 
-    public static Integer[] calculateDD(Set<Integer> Nr, Set<Integer> Nd, Set<Integer> nr, Set<Integer> nd) {
+    public static Set<Integer> calculateDD(Set<Integer> Nr, Set<Integer> Nd, Set<Integer> nr, Set<Integer> nd) {
 
         Set<Integer> t1;
         if (Nr.size() > Nd.size()) {
@@ -57,13 +57,13 @@ public class CalculationTable {
         }
 
         if (t1.size() > t2.size()) {
-            return Sets.intersection(t2, t1).toArray(new Integer[0]);
+            return Sets.intersection(t2, t1);
         }
 
-        return Sets.intersection(t1, t2).toArray(new Integer[0]);
+        return Sets.intersection(t1, t2);
     }
 
-    public static Integer[] calculateRI(Set<Integer> Nr, Set<Integer> Ni, Set<Integer> nr, Set<Integer> ni) {
+    public static Set<Integer> calculateRI(Set<Integer> Nr, Set<Integer> Ni, Set<Integer> nr, Set<Integer> ni) {
 
         Set<Integer> t1;
         if (Nr.size() > ni.size()) {
@@ -94,13 +94,13 @@ public class CalculationTable {
         }
 
         if (u1.size() > t3.size()) {
-            return Sets.union(t3, u1).toArray(new Integer[0]);
+            return Sets.union(t3, u1);
         }
 
-        return Sets.union(u1, t3).toArray(new Integer[0]);
+        return Sets.union(u1, t3);
     }
 
-    public static Integer[] calculateRD(Set<Integer> Nr, Set<Integer> Nd, Set<Integer> nr, Set<Integer> nd) {
+    public static Set<Integer> calculateRD(Set<Integer> Nr, Set<Integer> Nd, Set<Integer> nr, Set<Integer> nd) {
 
         Set<Integer> t1;
         if (Nr.size() > nd.size()) {
@@ -131,9 +131,9 @@ public class CalculationTable {
         }
 
         if (u1.size() > t3.size()) {
-            return Sets.union(t3, u1).toArray(new Integer[0]);
+            return Sets.union(t3, u1);
         }
 
-        return Sets.union(u1, t3).toArray(new Integer[0]);
+        return Sets.union(u1, t3);
     }
 }

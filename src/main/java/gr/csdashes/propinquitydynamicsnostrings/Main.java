@@ -1,13 +1,12 @@
 package gr.csdashes.propinquitydynamicsnostrings;
 
+import gr.csdashes.propinquitydynamicsnostrings.io.MapMessage;
 import gr.csdashes.propinquitydynamicsnostrings.io.PDVertexReader;
 import gr.csdashes.propinquitydynamicsnostrings.io.PDVertexWriter;
 import java.io.IOException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.MapWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.VIntWritable;
 import org.apache.hama.HamaConfiguration;
@@ -61,7 +60,7 @@ public class Main {
         graphJob.setOutputPath(new Path(args[3]));
 
         graphJob.setVertexIDClass(VIntWritable.class);
-        graphJob.setVertexValueClass(MapWritable.class);
+        graphJob.setVertexValueClass(MapMessage.class);
         graphJob.setEdgeValueClass(VIntWritable.class);
 
         graphJob.setInputFormat(TextInputFormat.class);

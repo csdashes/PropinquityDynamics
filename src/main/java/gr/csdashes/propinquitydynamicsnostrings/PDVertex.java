@@ -5,7 +5,9 @@ import static gr.csdashes.propinquitydynamicsnostrings.CalculationTable.calculat
 import static gr.csdashes.propinquitydynamicsnostrings.CalculationTable.calculateRD;
 import static gr.csdashes.propinquitydynamicsnostrings.CalculationTable.calculateRI;
 import static gr.csdashes.propinquitydynamicsnostrings.CalculationTable.calculateRR;
-import gr.csdashes.propinquitydynamicsnostrings.io.MyVIntArrayWritable;
+import gr.csdashes.propinquitydynamicsnostrings.io.MapMessage;
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -14,11 +16,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.MapWritable;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.VIntWritable;
-import org.apache.hadoop.io.Writable;
+import org.apache.hadoop.io.WritableUtils;
 import org.apache.hama.graph.Edge;
 import org.apache.hama.graph.Vertex;
 
@@ -26,7 +25,7 @@ import org.apache.hama.graph.Vertex;
  *
  * @author Anastasis Andronidis <anastasis90@yahoo.gr>
  */
-public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapWritable> {
+public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapMessage> {
 
     Set<Integer> Nr = new HashSet<>(50); // The remaining neighboors
     Set<Integer> Ni = new HashSet<>(50); // The neighboors to be insterted
@@ -38,9 +37,9 @@ public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapWritable> {
     //emerging value
     int b;
 
-    private Step mainStep = new Step(2);
-    private Step initializeStep = new Step(6);
-    private Step incrementalStep = new Step(4);
+    private final Step mainStep = new Step(2);
+    private final Step initializeStep = new Step(6);
+    private final Step incrementalStep = new Step(4);
 
     /* Increase the propinquity for each of the list items.
      * @param vertexes The list of the vertex ids to increase the propinquity
@@ -70,20 +69,31 @@ public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapWritable> {
         }
     }
 
+    // Message tags
+    private final Integer initTag = 0;
+    private final Integer intersectionTag = 1;
+    private final Integer NrTag = 2;
+    private final Integer puplusTag = 3;
+    private final Integer puminusTag = 4;
+    private final Integer senderTag = 5;
+    private final Integer dnNrTag = 6;
+    private final Integer dnNiTag = 7;
+    private final Integer dnNdTag = 8;
+    
     /* This method is responsible to initialize the propinquity
      * hash map in each vertex. Consists of 2 steps, the angle
      * and the conjugate propinquity update.
      * @param messages The messages received in each superstep.
      */
-    private void initialize(Iterable<MapWritable> messages) throws IOException {
+    private void initialize(Iterable<MapMessage> messages) throws IOException {        
         switch (this.initializeStep.getStep()) {
             /* Create an undirected graph. From each vertex send
              * our vertex id to all of the neighboors.
              */
             case 0:
-                MapWritable outMsg = new MapWritable();
-                Text k = new Text("init");
-                outMsg.put(k, this.getVertexID());
+                MapMessage outMsg = new MapMessage();                
+                
+                outMsg.put(this.initTag, this.getVertexID());
                 this.sendMessageToNeighbors(outMsg);
                 break;
             case 1:
@@ -92,11 +102,10 @@ public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapWritable> {
                 for (Edge<VIntWritable, VIntWritable> edge : edges) {
                     uniqueEdges.add(edge.getDestinationVertexID().get());
                 }
-                k = new Text("init");
-                for (MapWritable message : messages) {
-                    VIntWritable id = (VIntWritable) message.get(k);
-                    if (uniqueEdges.add(id.get())) {
-                        Edge<VIntWritable, VIntWritable> e = new Edge<>(id, new VIntWritable(0));
+                for (MapMessage message : messages) {
+                    Integer id = ((Set<Integer>) message.get(this.initTag)).iterator().next();
+                    if (uniqueEdges.add(id)) {
+                        Edge<VIntWritable, VIntWritable> e = new Edge<>(new VIntWritable(id), new VIntWritable(0));
                         this.addEdge(e);
                     }
                 }
@@ -121,22 +130,20 @@ public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapWritable> {
                  * that for the vertexes of the Set, the sender vertex is
                  * a common neighboor.
                  */
-                outMsg = new MapWritable();
-                k = new Text("Nr");
+                outMsg = new MapMessage();
                 for (Integer v : this.Nr) {
-                    outMsg.put(k, new MyVIntArrayWritable(this.Nr, v));
+                    outMsg.put(this.NrTag, this.Nr, v);
 
                     this.sendMessage(new VIntWritable(v), outMsg);
-                    outMsg = new MapWritable(); // TODO: Test if we can outMsg.clear()
+                    outMsg = new MapMessage(); // TODO: Test if we can outMsg.clear()
                 }
                 break;
             case 3:
                 /* Initialize the propinquity hash map for the vertexes of the
                  * received list.
                  */
-                k = new Text("Nr");
-                for (MapWritable message : messages) {
-                    List<Integer> commonNeighboors = ((MyVIntArrayWritable) message.get(k)).toList();
+                for (MapMessage message : messages) {
+                    Set<Integer> commonNeighboors = (Set<Integer>) message.get(this.NrTag);
                     updatePropinquity(commonNeighboors, UpdatePropinquity.INCREASE);
                 }
                 /* ==== Initialize conjugate propinquity ==== 
@@ -147,11 +154,12 @@ public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapWritable> {
                  * To achive only one way communication, a function that compairs
                  * the vertex ids is being used.
                  */
-                outMsg = new MapWritable();
+                outMsg = new MapMessage();
                 Integer id = this.getVertexID().get();
                 for (Integer neighboor : this.Nr) {
                     if (neighboor > id) {
-                        outMsg.put(k, new MyVIntArrayWritable(this.Nr, neighboor));
+                        // We dont need to clear, the key is overwritten
+                        outMsg.put(this.NrTag, this.Nr, neighboor);
                         this.sendMessage(new VIntWritable(neighboor), outMsg);
                     }
                 }
@@ -163,24 +171,19 @@ public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapWritable> {
                  * Send the intersection list to every element of this list so
                  * as to increase the propinquity.
                  */
-                List<Integer> Nr_neighboors;
-                k = new Text("Intersection");
-                Text kNr = new Text("Nr");
-                for (MapWritable message : messages) {
-                    Nr_neighboors = ((MyVIntArrayWritable) message.get(kNr)).toList();
+                Set<Integer> Nr_neighboors;
+                for (MapMessage message : messages) {
+                    Nr_neighboors = (Set<Integer>) message.get(this.NrTag);
 
                     boolean Nr1IsLarger = Nr.size() > Nr_neighboors.size();
                     Set<Integer> intersection = new HashSet<>(Nr1IsLarger ? Nr_neighboors : Nr);
                     intersection.retainAll(Nr1IsLarger ? Nr : Nr_neighboors);
 
                     for (Integer vertex : intersection) {
-                        Set<Integer> messageList = new HashSet<>(intersection);
-                        messageList.remove(vertex);
-
-                        if (!messageList.isEmpty()) {
-                            MyVIntArrayWritable aw = new MyVIntArrayWritable(messageList);
-                            outMsg = new MapWritable();
-                            outMsg.put(k, aw);
+                        // If size == 1 this means that vertex is the intersection set
+                        if (intersection.size() > 1) {
+                            outMsg = new MapMessage(); // TODO: no need
+                            outMsg.put(this.intersectionTag, intersection, vertex);
                             this.sendMessage(new VIntWritable(vertex), outMsg);
                         }
                     }
@@ -188,11 +191,8 @@ public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapWritable> {
                 break;
             case 5:
                 // update the conjugate propinquity
-                k = new Text("Intersection");
-                for (MapWritable message : messages) {
-                    MyVIntArrayWritable incoming = (MyVIntArrayWritable) message.get(k);
-                    Nr_neighboors = incoming.toList();
-
+                for (MapMessage message : messages) {
+                    Nr_neighboors = (Set<Integer>) message.get(this.intersectionTag);
                     updatePropinquity(Nr_neighboors, UpdatePropinquity.INCREASE);
                 }
                 this.mainStep.increaseStep();
@@ -206,7 +206,7 @@ public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapWritable> {
     /* This method is responsible for the incremental update
      * @param messages The messages received in each superstep.
      */
-    private void incremental(Iterable<MapWritable> messages) throws IOException {
+    private void incremental(Iterable<MapMessage> messages) throws IOException {
 
         switch (this.incrementalStep.getStep()) {
             case 0:
@@ -237,203 +237,176 @@ public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapWritable> {
                 this.updatePropinquity(this.Ni, UpdatePropinquity.INCREASE);
                 this.updatePropinquity(this.Nd, UpdatePropinquity.DECREASE);
 
-                Text incr = new Text("PU+");
-                Text decr = new Text("PU-");
                 for (Integer vertex : this.Nr) {
                     VIntWritable target = new VIntWritable(vertex);
-                    MapWritable outMsg = new MapWritable();
+                    MapMessage outMsg = new MapMessage();
 
-                    outMsg.put(incr, new MyVIntArrayWritable(this.Ni));
+                    outMsg.put(this.puplusTag, this.Ni);
                     this.sendMessage(target, outMsg);
 
-                    outMsg = new MapWritable();
+                    outMsg = new MapMessage();
 
-                    outMsg.put(decr, new MyVIntArrayWritable(this.Nd));
+                    outMsg.put(this.puminusTag, this.Nd);
                     this.sendMessage(target, outMsg);
                 }
                 for (Integer vertex : this.Ni) {
                     VIntWritable target = new VIntWritable(vertex);
-                    MapWritable outMsg = new MapWritable();
+                    MapMessage outMsg = new MapMessage();
 
-                    outMsg.put(incr, new MyVIntArrayWritable(this.Nr));
+                    outMsg.put(this.puplusTag, this.Nr);
                     this.sendMessage(target, outMsg);
 
-                    outMsg = new MapWritable();
+                    outMsg = new MapMessage();
 
-                    outMsg.put(incr, new MyVIntArrayWritable(this.Ni, vertex));
+                    outMsg.put(this.puplusTag, this.Ni, vertex);
                     this.sendMessage(target, outMsg);
                 }
                 for (Integer vertex : this.Nd) {
                     VIntWritable target = new VIntWritable(vertex);
-                    MapWritable outMsg = new MapWritable();
+                    MapMessage outMsg = new MapMessage();
 
-                    outMsg.put(decr, new MyVIntArrayWritable(this.Nr));
+                    outMsg.put(this.puminusTag, this.Nr);
                     this.sendMessage(target, outMsg);
 
-                    outMsg = new MapWritable();
+                    outMsg = new MapMessage();
 
-                    outMsg.put(decr, new MyVIntArrayWritable(this.Nd, vertex));
+                    outMsg.put(this.puminusTag, this.Nd, vertex);
                     this.sendMessage(target, outMsg);
                 }
                 break;
             case 1:
-                incr = new Text("PU+");
-                decr = new Text("PU-");
-                for (MapWritable message : messages) {
-                    if (message.containsKey(incr)) {
-                        List<Integer> s = ((MyVIntArrayWritable) message.get(incr)).toList();
-
+                for (MapMessage message : messages) {
+                    if (message.containsKey(this.puplusTag)) {
+                        Set<Integer> s = (Set<Integer>) message.get(this.puplusTag);
                         updatePropinquity(s, UpdatePropinquity.INCREASE);
-                    } else if (message.containsKey(decr)) {
-                        List<Integer> s = ((MyVIntArrayWritable) message.get(decr)).toList();
-
+                    } else if (message.containsKey(this.puminusTag)) {
+                        Set<Integer> s = (Set<Integer>) message.get(this.puminusTag);
                         updatePropinquity(s, UpdatePropinquity.DECREASE);
                     }
                 }
 
-                Text sender = new Text("Sender");
-                Text dnNr = new Text("DN NR");
-                Text dnNi = new Text("DN NI");
-                Text dnNd = new Text("DN ND");
                 for (Integer vertex : this.Nr) {
                     if ((vertex > this.getVertexID().get())) {
-                        MapWritable outMsg = new MapWritable();
+                        MapMessage outMsg = new MapMessage();
 
-                        outMsg.put(sender, this.getVertexID());
-                        outMsg.put(dnNr, new MyVIntArrayWritable(this.Nr));
-                        outMsg.put(dnNi, new MyVIntArrayWritable(this.Ni));
-                        outMsg.put(dnNd, new MyVIntArrayWritable(this.Nd));
+                        outMsg.put(this.senderTag, this.getVertexID());
+                        outMsg.put(this.dnNrTag, this.Nr);
+                        outMsg.put(this.dnNiTag, this.Ni);
+                        outMsg.put(this.dnNdTag, this.Nd);
                         this.sendMessage(new VIntWritable(vertex), outMsg);
                     }
                 }
                 for (Integer vertex : this.Ni) {
                     if (vertex > this.getVertexID().get()) {
-                        MapWritable outMsg = new MapWritable();
+                        MapMessage outMsg = new MapMessage();
 
-                        outMsg.put(sender, this.getVertexID());
-                        outMsg.put(dnNr, new MyVIntArrayWritable(this.Nr));
-                        outMsg.put(dnNi, new MyVIntArrayWritable(this.Ni));
+                        outMsg.put(this.senderTag, this.getVertexID());
+                        outMsg.put(this.dnNrTag, this.Nr);
+                        outMsg.put(this.dnNiTag, this.Ni);
                         this.sendMessage(new VIntWritable(vertex), outMsg);
                     }
                 }
                 for (Integer vertex : this.Nd) {
                     if (vertex > this.getVertexID().get()) {
-                        MapWritable outMsg = new MapWritable();
+                        MapMessage outMsg = new MapMessage();
 
-                        outMsg.put(sender, this.getVertexID());
-                        outMsg.put(dnNr, new MyVIntArrayWritable(this.Nr));
-                        outMsg.put(dnNd, new MyVIntArrayWritable(this.Nd));
+                        outMsg.put(this.senderTag, this.getVertexID());
+                        outMsg.put(this.dnNrTag, this.Nr);
+                        outMsg.put(this.dnNdTag, this.Nd);
                         this.sendMessage(new VIntWritable(vertex), outMsg);
                     }
                 }
                 break;
             case 2:
-                incr = new Text("PU+");
-                decr = new Text("PU-");
+                for (MapMessage message : messages) {
+                    Integer senderId = ((Set<Integer>) message.get(this.senderTag)).iterator().next();
 
-                sender = new Text("Sender");
-                dnNr = new Text("DN NR");
-                dnNi = new Text("DN NI");
-                dnNd = new Text("DN ND");
-
-                for (MapWritable message : messages) {
-                    Integer senderId = ((VIntWritable) message.get(sender)).get();
-
-                    MyVIntArrayWritable messageValueNr = (MyVIntArrayWritable) message.get(dnNr);
-                    MyVIntArrayWritable messageValueNi = (MyVIntArrayWritable) message.get(dnNi);
-                    MyVIntArrayWritable messageValueNd = (MyVIntArrayWritable) message.get(dnNd);
+                    Set<Integer> messageValueNr = (Set<Integer>) message.get(this.dnNrTag);
+                    Set<Integer> messageValueNi = (Set<Integer>) message.get(this.dnNiTag);
+                    Set<Integer> messageValueNd = (Set<Integer>) message.get(this.dnNdTag);
 
                     if (messageValueNi == null) {
-                        messageValueNi = new MyVIntArrayWritable(new Integer[0]);
+                        messageValueNi = new HashSet<>(10);
                     }
                     if (messageValueNd == null) {
-                        messageValueNd = new MyVIntArrayWritable(new Integer[0]);
+                        messageValueNd = new HashSet<>(10);
                     }
 
                     if (this.Nr.contains(senderId)) {
                         //calculate RR
-                        Integer[] RRList = calculateRR(this.Nr,
-                                new HashSet<>(messageValueNr.toList()));
+                        Set<Integer> RRList = calculateRR(this.Nr, messageValueNr);
                         //calculate RI
-                        Integer[] RIList = calculateRI(this.Nr, this.Ni,
-                                new HashSet<>(messageValueNr.toList()),
-                                new HashSet<>(messageValueNi.toList()));
+                        Set<Integer> RIList = calculateRI(this.Nr, this.Ni,
+                                messageValueNr, messageValueNi);
                         //calculate RD
-                        Integer[] RDList = calculateRD(this.Nr, this.Nd,
-                                new HashSet<>(messageValueNr.toList()),
-                                new HashSet<>(messageValueNd.toList()));
+                        Set<Integer> RDList = calculateRD(this.Nr, this.Nd,
+                                messageValueNr, messageValueNd);
 
                         for (Integer vertex : RRList) {
-                            MapWritable outMsg = new MapWritable();
+                            MapMessage outMsg = new MapMessage();
 
-                            outMsg.put(incr, new MyVIntArrayWritable(RIList));
+                            outMsg.put(this.puplusTag, RIList);
                             this.sendMessage(new VIntWritable(vertex), outMsg);
 
-                            outMsg = new MapWritable();
+                            outMsg = new MapMessage();
 
-                            outMsg.put(decr, new MyVIntArrayWritable(RDList));
+                            outMsg.put(this.puminusTag, RDList);
                             this.sendMessage(new VIntWritable(vertex), outMsg);
                         }
                         for (Integer vertex : RIList) {
-                            MapWritable outMsg = new MapWritable();
+                            MapMessage outMsg = new MapMessage();
 
-                            outMsg.put(incr, new MyVIntArrayWritable(RRList));
+                            outMsg.put(this.puplusTag, RRList);
                             this.sendMessage(new VIntWritable(vertex), outMsg);
 
-                            outMsg = new MapWritable();
+                            outMsg = new MapMessage();
 
-                            outMsg.put(incr, new MyVIntArrayWritable(RIList, vertex));
+                            outMsg.put(this.puplusTag, RIList, vertex);
                             this.sendMessage(new VIntWritable(vertex), outMsg);
                         }
                         for (Integer vertex : RDList) {
-                            MapWritable outMsg = new MapWritable();
+                            MapMessage outMsg = new MapMessage();
 
-                            outMsg.put(decr, new MyVIntArrayWritable(RRList));
+                            outMsg.put(this.puminusTag, RRList);
                             this.sendMessage(new VIntWritable(vertex), outMsg);
 
-                            outMsg = new MapWritable();
+                            outMsg = new MapMessage();
 
-                            outMsg.put(decr, new MyVIntArrayWritable(RDList, vertex));
+                            outMsg.put(this.puminusTag, RDList, vertex);
                             this.sendMessage(new VIntWritable(vertex), outMsg);
                         }
                     }
                     if (this.Ni.contains(senderId)) {
                         //calculate II
-                        Integer[] IIList = calculateII(this.Nr, this.Ni,
-                                new HashSet<>(messageValueNr.toList()),
-                                new HashSet<>(messageValueNi.toList()));
+                        Set<Integer> IIList = calculateII(this.Nr, this.Ni,
+                                messageValueNr, messageValueNi);
                         for (Integer vertex : IIList) {
-                            MapWritable outMsg = new MapWritable();
+                            MapMessage outMsg = new MapMessage();
 
-                            outMsg.put(incr, new MyVIntArrayWritable(IIList, vertex));
+                            outMsg.put(this.puplusTag, IIList, vertex);
                             this.sendMessage(new VIntWritable(vertex), outMsg);
                         }
                     }
                     if (this.Nd.contains(senderId)) {
                         //calculate DD
-                        Integer[] DDList = calculateDD(this.Nr, this.Nd,
-                                new HashSet<>(messageValueNr.toList()),
-                                new HashSet<>(messageValueNd.toList()));
+                        Set<Integer> DDList = calculateDD(this.Nr, this.Nd,
+                                messageValueNr, messageValueNd);
                         for (Integer vertex : DDList) {
-                            MapWritable outMsg = new MapWritable();
+                            MapMessage outMsg = new MapMessage();
 
-                            outMsg.put(decr, new MyVIntArrayWritable(DDList, vertex));
+                            outMsg.put(this.puminusTag, DDList, vertex);
                             this.sendMessage(new VIntWritable(vertex), outMsg);
                         }
                     }
                 }
                 break;
             case 3:
-                incr = new Text("PU+");
-                decr = new Text("PU-");
-                for (MapWritable message : messages) {
-                    if (message.containsKey(incr)) {
-                        List<Integer> s = ((MyVIntArrayWritable) message.get(incr)).toList();
-
+                for (MapMessage message : messages) {
+                    if (message.containsKey(this.puplusTag)) {
+                        Set<Integer> s = (Set<Integer>) message.get(this.puplusTag);
                         updatePropinquity(s, UpdatePropinquity.INCREASE);
-                    } else if (message.containsKey(decr)) {
-                        List<Integer> s = ((MyVIntArrayWritable) message.get(decr)).toList();
-
+                    } else if (message.containsKey(this.puminusTag)) {
+                        Set<Integer> s = (Set<Integer>) message.get(this.puminusTag);
                         updatePropinquity(s, UpdatePropinquity.DECREASE);
                     }
                 }
@@ -456,13 +429,9 @@ public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapWritable> {
     }
 
     @Override
-    public void compute(Iterable<MapWritable> messages) throws IOException {
+    public void compute(Iterable<MapMessage> messages) throws IOException {
         this.a = this.getConf().getInt("a", 0);
         this.b = this.getConf().getInt("b", 1000);
-
-        if (this.getSuperstepCount() > 0) {
-            this.deserialize();
-        }
 
         switch (this.mainStep.getStep()) {
             case 0:
@@ -476,53 +445,68 @@ public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapWritable> {
         if (this.getSuperstepCount() >= 100) {
             redistributeEdges();
         }
-
-        this.serialize();
     }
-
-    private void deserialize() {
-        Text k = new Text("Nd");
-        this.Nd.addAll(((MyVIntArrayWritable) this.getValue().get(k)).toList());
-
-        k.set("Ni");
-        this.Ni.addAll(((MyVIntArrayWritable) this.getValue().get(k)).toList());
-
-        k.set("Nr");
-        this.Nr.addAll(((MyVIntArrayWritable) this.getValue().get(k)).toList());
-
-        k.set("P");
-        MapWritable m = (MapWritable) this.getValue().get(k);
-        for (Entry<Writable, Writable> e : m.entrySet()) {
-            Integer key = ((IntWritable) e.getKey()).get();
-            Integer value = ((IntWritable) e.getValue()).get();
-            this.P.put(key, value);
+    
+    @Override
+    public void write(DataOutput d) throws IOException {
+        super.write(d);
+        
+        this.incrementalStep.write(d);
+        this.initializeStep.write(d);
+        this.mainStep.write(d);
+        
+        WritableUtils.writeVInt(d, this.Nr.size());
+        for (Integer v : this.Nr) {
+            WritableUtils.writeVInt(d, v);
         }
-
-        k.set("incrementalStep");
-        this.incrementalStep = (Step) this.getValue().get(k);
-        k.set("initializeStep");
-        this.initializeStep = (Step) this.getValue().get(k);
-        k.set("mainStep");
-        this.mainStep = (Step) this.getValue().get(k);
+        
+        WritableUtils.writeVInt(d, this.Ni.size());
+        for (Integer v : this.Ni) {
+            WritableUtils.writeVInt(d, v);
+        }
+        
+        WritableUtils.writeVInt(d, this.Nd.size());
+        for (Integer v : this.Nd) {
+            WritableUtils.writeVInt(d, v);
+        }
+        
+        WritableUtils.writeVInt(d, this.P.size());
+        for (Entry<Integer, Integer> entry : this.P.entrySet()) {
+            WritableUtils.writeVInt(d, entry.getKey());
+            WritableUtils.writeVInt(d, entry.getValue());
+        }
     }
-
-    private void serialize() {
-        MapWritable valueMap = new MapWritable();
-
-        MapWritable Pmap = new MapWritable();
-        for (Entry<Integer, Integer> e : this.P.entrySet()) {
-            Pmap.put(new IntWritable(e.getKey()), new IntWritable(e.getValue()));
+    
+    @Override
+    public void readFields(DataInput di) throws IOException {
+        super.readFields(di);
+        
+        this.incrementalStep.readFields(di);
+        this.initializeStep.readFields(di);
+        this.mainStep.readFields(di);
+        
+        int size = WritableUtils.readVInt(di);
+        for (int i = 0; i < size; i++) {
+            this.Nr.add(WritableUtils.readVInt(di));
         }
-        valueMap.put(new Text("P"), Pmap);
-
-        valueMap.put(new Text("Nr"), new MyVIntArrayWritable(this.Nr));
-        valueMap.put(new Text("Ni"), new MyVIntArrayWritable(this.Ni));
-        valueMap.put(new Text("Nd"), new MyVIntArrayWritable(this.Nd));
-
-        valueMap.put(new Text("incrementalStep"), this.incrementalStep);
-        valueMap.put(new Text("initializeStep"), this.initializeStep);
-        valueMap.put(new Text("mainStep"), this.mainStep);
-
-        this.setValue(valueMap);
+        
+        size = WritableUtils.readVInt(di);
+        for (int i = 0; i < size; i++) {
+            this.Ni.add(WritableUtils.readVInt(di));
+        }
+        
+        size = WritableUtils.readVInt(di);
+        for (int i = 0; i < size; i++) {
+            this.Nd.add(WritableUtils.readVInt(di));
+        }
+        
+        // read P
+        size = WritableUtils.readVInt(di);
+        Integer k,v;
+        for (int i = 0; i < size; i++) {
+            k = WritableUtils.readVInt(di);
+            v = WritableUtils.readVInt(di);
+            this.P.put(k, v);
+        }
     }
 }
