@@ -447,66 +447,66 @@ public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapMessage> {
         }
     }
     
-    @Override
-    public void write(DataOutput d) throws IOException {
-        super.write(d);
-        
-        this.incrementalStep.write(d);
-        this.initializeStep.write(d);
-        this.mainStep.write(d);
-        
-        WritableUtils.writeVInt(d, this.Nr.size());
-        for (Integer v : this.Nr) {
-            WritableUtils.writeVInt(d, v);
-        }
-        
-        WritableUtils.writeVInt(d, this.Ni.size());
-        for (Integer v : this.Ni) {
-            WritableUtils.writeVInt(d, v);
-        }
-        
-        WritableUtils.writeVInt(d, this.Nd.size());
-        for (Integer v : this.Nd) {
-            WritableUtils.writeVInt(d, v);
-        }
-        
-        WritableUtils.writeVInt(d, this.P.size());
-        for (Entry<Integer, Integer> entry : this.P.entrySet()) {
-            WritableUtils.writeVInt(d, entry.getKey());
-            WritableUtils.writeVInt(d, entry.getValue());
-        }
-    }
-    
-    @Override
-    public void readFields(DataInput di) throws IOException {
-        super.readFields(di);
-        
-        this.incrementalStep.readFields(di);
-        this.initializeStep.readFields(di);
-        this.mainStep.readFields(di);
-        
-        int size = WritableUtils.readVInt(di);
-        for (int i = 0; i < size; i++) {
-            this.Nr.add(WritableUtils.readVInt(di));
-        }
-        
-        size = WritableUtils.readVInt(di);
-        for (int i = 0; i < size; i++) {
-            this.Ni.add(WritableUtils.readVInt(di));
-        }
-        
-        size = WritableUtils.readVInt(di);
-        for (int i = 0; i < size; i++) {
-            this.Nd.add(WritableUtils.readVInt(di));
-        }
-        
-        // read P
-        size = WritableUtils.readVInt(di);
-        Integer k,v;
-        for (int i = 0; i < size; i++) {
-            k = WritableUtils.readVInt(di);
-            v = WritableUtils.readVInt(di);
-            this.P.put(k, v);
-        }
-    }
+//    @Override
+//    public void write(DataOutput d) throws IOException {
+//        super.write(d);
+//        
+//        this.incrementalStep.write(d);
+//        this.initializeStep.write(d);
+//        this.mainStep.write(d);
+//        
+//        WritableUtils.writeVInt(d, this.Nr.size());
+//        for (Integer v : this.Nr) {
+//            WritableUtils.writeVInt(d, v);
+//        }
+//        
+//        WritableUtils.writeVInt(d, this.Ni.size());
+//        for (Integer v : this.Ni) {
+//            WritableUtils.writeVInt(d, v);
+//        }
+//        
+//        WritableUtils.writeVInt(d, this.Nd.size());
+//        for (Integer v : this.Nd) {
+//            WritableUtils.writeVInt(d, v);
+//        }
+//        
+//        WritableUtils.writeVInt(d, this.P.size());
+//        for (Entry<Integer, Integer> entry : this.P.entrySet()) {
+//            WritableUtils.writeVInt(d, entry.getKey());
+//            WritableUtils.writeVInt(d, entry.getValue());
+//        }
+//    }
+//    
+//    @Override
+//    public void readFields(DataInput di) throws IOException {
+//        super.readFields(di);
+//        
+//        this.incrementalStep.readFields(di);
+//        this.initializeStep.readFields(di);
+//        this.mainStep.readFields(di);
+//        
+//        int size = WritableUtils.readVInt(di);
+//        for (int i = 0; i < size; i++) {
+//            this.Nr.add(WritableUtils.readVInt(di));
+//        }
+//        
+//        size = WritableUtils.readVInt(di);
+//        for (int i = 0; i < size; i++) {
+//            this.Ni.add(WritableUtils.readVInt(di));
+//        }
+//        
+//        size = WritableUtils.readVInt(di);
+//        for (int i = 0; i < size; i++) {
+//            this.Nd.add(WritableUtils.readVInt(di));
+//        }
+//        
+//        // read P
+//        size = WritableUtils.readVInt(di);
+//        Integer k,v;
+//        for (int i = 0; i < size; i++) {
+//            k = WritableUtils.readVInt(di);
+//            v = WritableUtils.readVInt(di);
+//            this.P.put(k, v);
+//        }
+//    }
 }
