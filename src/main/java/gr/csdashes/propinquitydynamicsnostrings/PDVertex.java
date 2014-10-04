@@ -6,18 +6,14 @@ import static gr.csdashes.propinquitydynamicsnostrings.CalculationTable.calculat
 import static gr.csdashes.propinquitydynamicsnostrings.CalculationTable.calculateRI;
 import static gr.csdashes.propinquitydynamicsnostrings.CalculationTable.calculateRR;
 import gr.csdashes.propinquitydynamicsnostrings.io.MapMessage;
-import java.io.DataInput;
-import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import org.apache.hadoop.io.VIntWritable;
-import org.apache.hadoop.io.WritableUtils;
 import org.apache.hama.graph.Edge;
 import org.apache.hama.graph.Vertex;
 
