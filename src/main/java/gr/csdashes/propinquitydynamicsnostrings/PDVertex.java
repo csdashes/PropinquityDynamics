@@ -205,6 +205,216 @@ public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapMessage> {
         /* ==== Initialize conjugate propinquity end ==== */
     }
 
+    private void applyNiNdCondition() {
+        int terminateCond = 0;
+        this.Ni.clear();
+        this.Nd.clear();
+
+        Iterator<Entry<Integer, Integer>> it = this.P.entrySet().iterator();
+        while (it.hasNext()) {
+            Entry<Integer, Integer> entry = it.next();
+
+            if (entry.getValue() == 0) {
+                it.remove();
+                continue;
+            }
+
+            if (entry.getValue() <= this.a && this.Nr.contains(entry.getKey())) {
+                this.Nd.add(entry.getKey());
+                this.Nr.remove(entry.getKey());
+                terminateCond++;
+            } else if (entry.getValue() >= this.b && !this.Nr.contains(entry.getKey())) {
+                this.Ni.add(entry.getKey());
+                terminateCond++;
+            }
+        }
+
+        // If we don't have any additions on Ni and Nd, we can vote to
+        // halt.
+        //if (terminateCond == 0) {
+        //    redistributeEdges();
+        //    break;
+        //}
+    }
+    
+    private void sendAnglePropinquity() throws IOException {
+        for (Integer vertex : this.Nr) {
+            this.dest.set(vertex);
+
+            this.outMsg.put(this.puplusTag, this.Ni);
+            this.sendMessage(this.dest, this.outMsg);
+            this.outMsg.clear();
+
+            this.outMsg.put(this.puminusTag, this.Nd);
+            this.sendMessage(this.dest, this.outMsg);
+            this.outMsg.clear();
+        }
+        for (Integer vertex : this.Ni) {
+            this.dest.set(vertex);
+
+            this.outMsg.put(this.puplusTag, this.Nr);
+            this.sendMessage(this.dest, this.outMsg);
+            this.outMsg.clear();
+
+            this.outMsg.put(this.puplusTag, this.Ni, vertex);
+            this.sendMessage(this.dest, this.outMsg);
+            this.outMsg.clear();
+        }
+        for (Integer vertex : this.Nd) {
+            this.dest.set(vertex);
+
+            this.outMsg.put(this.puminusTag, this.Nr);
+            this.sendMessage(this.dest, this.outMsg);
+            this.outMsg.clear();
+
+            this.outMsg.put(this.puminusTag, this.Nd, vertex);
+            this.sendMessage(this.dest, this.outMsg);
+            this.outMsg.clear();
+        }
+    }
+    
+    private void receiveAnglePropinquity(Iterable<MapMessage> messages) {
+        for (MapMessage message : messages) {
+            if (message.containsKey(this.puplusTag)) {
+                Set<Integer> s = (Set<Integer>) message.get(this.puplusTag);
+                updatePropinquity(s, UpdatePropinquity.INCREASE);
+            } else if (message.containsKey(this.puminusTag)) {
+                Set<Integer> s = (Set<Integer>) message.get(this.puminusTag);
+                updatePropinquity(s, UpdatePropinquity.DECREASE);
+            }
+        }
+    }
+    
+    private void sendNeighbors() throws IOException {
+        for (Integer vertex : this.Nr) {
+            if ((vertex > this.getVertexID().get())) {
+                this.outMsg.put(this.senderTag, this.getVertexID());
+                this.outMsg.put(this.dnNrTag, this.Nr);
+                this.outMsg.put(this.dnNiTag, this.Ni);
+                this.outMsg.put(this.dnNdTag, this.Nd);
+                this.dest.set(vertex);
+                this.sendMessage(this.dest, this.outMsg);
+                this.outMsg.clear();
+            }
+        }
+        for (Integer vertex : this.Ni) {
+            if (vertex > this.getVertexID().get()) {
+                this.outMsg.put(this.senderTag, this.getVertexID());
+                this.outMsg.put(this.dnNrTag, this.Nr);
+                this.outMsg.put(this.dnNiTag, this.Ni);
+                this.dest.set(vertex);
+                this.sendMessage(this.dest, this.outMsg);
+                this.outMsg.clear();
+            }
+        }
+        for (Integer vertex : this.Nd) {
+            if (vertex > this.getVertexID().get()) {
+                this.outMsg.put(this.senderTag, this.getVertexID());
+                this.outMsg.put(this.dnNrTag, this.Nr);
+                this.outMsg.put(this.dnNdTag, this.Nd);
+                this.dest.set(vertex);
+                this.sendMessage(this.dest, this.outMsg);
+                this.outMsg.clear();
+            }
+        }
+    }
+    
+    private void receiveNeighbors(Iterable<MapMessage> messages) throws IOException {
+        for (MapMessage message : messages) {
+            Integer senderId = ((Set<Integer>) message.get(this.senderTag)).iterator().next();
+
+            Set<Integer> messageValueNr = (Set<Integer>) message.get(this.dnNrTag);
+            Set<Integer> messageValueNi = (Set<Integer>) message.get(this.dnNiTag);
+            Set<Integer> messageValueNd = (Set<Integer>) message.get(this.dnNdTag);
+
+            if (messageValueNi == null) {
+                messageValueNi = new HashSet<>(10);
+            }
+            if (messageValueNd == null) {
+                messageValueNd = new HashSet<>(10);
+            }
+
+            if (this.Nr.contains(senderId)) {
+                //calculate RR
+                Set<Integer> RRList = calculateRR(this.Nr, messageValueNr);
+                //calculate RI
+                Set<Integer> RIList = calculateRI(this.Nr, this.Ni,
+                        messageValueNr, messageValueNi);
+                //calculate RD
+                Set<Integer> RDList = calculateRD(this.Nr, this.Nd,
+                        messageValueNr, messageValueNd);
+
+                for (Integer vertex : RRList) {
+                    this.outMsg.put(this.puplusTag, RIList);
+                    this.dest.set(vertex);
+                    this.sendMessage(this.dest, this.outMsg);
+                    this.outMsg.clear();
+
+                    this.outMsg.put(this.puminusTag, RDList);
+                    this.dest.set(vertex);
+                    this.sendMessage(this.dest, this.outMsg);
+                    this.outMsg.clear();
+                }
+                for (Integer vertex : RIList) {
+                    this.outMsg.put(this.puplusTag, RRList);
+                    this.dest.set(vertex);
+                    this.sendMessage(this.dest, this.outMsg);
+                    this.outMsg.clear();
+
+                    this.outMsg.put(this.puplusTag, RIList, vertex);
+                    this.dest.set(vertex);
+                    this.sendMessage(this.dest, this.outMsg);
+                    this.outMsg.clear();
+                }
+                for (Integer vertex : RDList) {
+                    this.outMsg.put(this.puminusTag, RRList);
+                    this.dest.set(vertex);
+                    this.sendMessage(this.dest, this.outMsg);
+                    this.outMsg.clear();
+
+                    this.outMsg.put(this.puminusTag, RDList, vertex);
+                    this.dest.set(vertex);
+                    this.sendMessage(this.dest, this.outMsg);
+                    this.outMsg.clear();
+                }
+            }
+            if (this.Ni.contains(senderId)) {
+                //calculate II
+                Set<Integer> IIList = calculateII(this.Nr, this.Ni,
+                        messageValueNr, messageValueNi);
+                for (Integer vertex : IIList) {
+                    this.outMsg.put(this.puplusTag, IIList, vertex);
+                    this.dest.set(vertex);
+                    this.sendMessage(this.dest, this.outMsg);
+                    this.outMsg.clear();
+                }
+            }
+            if (this.Nd.contains(senderId)) {
+                //calculate DD
+                Set<Integer> DDList = calculateDD(this.Nr, this.Nd,
+                        messageValueNr, messageValueNd);
+                for (Integer vertex : DDList) {
+                    this.outMsg.put(this.puminusTag, DDList, vertex);
+                    this.dest.set(vertex);
+                    this.sendMessage(this.dest, this.outMsg);
+                    this.outMsg.clear();
+                }
+            }
+        }
+    }
+    
+    private void receiveConjugatePropinquity(Iterable<MapMessage> messages) {
+        for (MapMessage message : messages) {
+            if (message.containsKey(this.puplusTag)) {
+                Set<Integer> s = (Set<Integer>) message.get(this.puplusTag);
+                updatePropinquity(s, UpdatePropinquity.INCREASE);
+            } else if (message.containsKey(this.puminusTag)) {
+                Set<Integer> s = (Set<Integer>) message.get(this.puminusTag);
+                updatePropinquity(s, UpdatePropinquity.DECREASE);
+            }
+        }
+    }
+    
     /* This method is responsible for the incremental update
      * @param messages The messages received in each superstep.
      */
@@ -212,213 +422,25 @@ public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapMessage> {
 
         switch (this.incrementalStep.getStep()) {
             case 0:
-                int terminateCond = 0;
-                this.Ni.clear();
-                this.Nd.clear();
-
-                Iterator<Entry<Integer, Integer>> it = this.P.entrySet().iterator();
-                while (it.hasNext()) {
-                    Entry<Integer, Integer> entry = it.next();
-                    
-                    if (entry.getValue() == 0) {
-                        it.remove();
-                        continue;
-                    }
-                    
-                    if (entry.getValue() <= this.a && this.Nr.contains(entry.getKey())) {
-                        this.Nd.add(entry.getKey());
-                        this.Nr.remove(entry.getKey());
-                        terminateCond++;
-                    } else if (entry.getValue() >= this.b && !this.Nr.contains(entry.getKey())) {
-                        this.Ni.add(entry.getKey());
-                        terminateCond++;
-                    }
-                }
-
-                // If we don't have any additions on Ni and Nd, we can vote to
-                // halt.
-//                if (terminateCond == 0) {
-//                    redistributeEdges();
-//                    break;
-//                }
-
+                applyNiNdCondition();
+                
                 // We take care of the direct connections here. If we delete a neightbor,
                 // we must decrease the propinquity etc...
                 this.updatePropinquity(this.Ni, UpdatePropinquity.INCREASE);
                 this.updatePropinquity(this.Nd, UpdatePropinquity.DECREASE);
 
-                for (Integer vertex : this.Nr) {
-                    this.dest.set(vertex);
-
-                    this.outMsg.put(this.puplusTag, this.Ni);
-                    this.sendMessage(this.dest, this.outMsg);
-                    this.outMsg.clear();
-
-                    this.outMsg.put(this.puminusTag, this.Nd);
-                    this.sendMessage(this.dest, this.outMsg);
-                    this.outMsg.clear();
-                }
-                for (Integer vertex : this.Ni) {
-                    this.dest.set(vertex);
-
-                    this.outMsg.put(this.puplusTag, this.Nr);
-                    this.sendMessage(this.dest, this.outMsg);
-                    this.outMsg.clear();
-
-
-                    this.outMsg.put(this.puplusTag, this.Ni, vertex);
-                    this.sendMessage(this.dest, this.outMsg);
-                    this.outMsg.clear();
-                }
-                for (Integer vertex : this.Nd) {
-                    this.dest.set(vertex);
-
-                    this.outMsg.put(this.puminusTag, this.Nr);
-                    this.sendMessage(this.dest, this.outMsg);
-                    this.outMsg.clear();
-
-
-                    this.outMsg.put(this.puminusTag, this.Nd, vertex);
-                    this.sendMessage(this.dest, this.outMsg);
-                    this.outMsg.clear();
-                }
+                sendAnglePropinquity();
                 break;
             case 1:
-                for (MapMessage message : messages) {
-                    if (message.containsKey(this.puplusTag)) {
-                        Set<Integer> s = (Set<Integer>) message.get(this.puplusTag);
-                        updatePropinquity(s, UpdatePropinquity.INCREASE);
-                    } else if (message.containsKey(this.puminusTag)) {
-                        Set<Integer> s = (Set<Integer>) message.get(this.puminusTag);
-                        updatePropinquity(s, UpdatePropinquity.DECREASE);
-                    }
-                }
+                receiveAnglePropinquity(messages);
 
-                for (Integer vertex : this.Nr) {
-                    if ((vertex > this.getVertexID().get())) {
-                        this.outMsg.put(this.senderTag, this.getVertexID());
-                        this.outMsg.put(this.dnNrTag, this.Nr);
-                        this.outMsg.put(this.dnNiTag, this.Ni);
-                        this.outMsg.put(this.dnNdTag, this.Nd);
-                        this.dest.set(vertex);
-                        this.sendMessage(this.dest, this.outMsg);
-                        this.outMsg.clear();
-                    }
-                }
-                for (Integer vertex : this.Ni) {
-                    if (vertex > this.getVertexID().get()) {
-                        this.outMsg.put(this.senderTag, this.getVertexID());
-                        this.outMsg.put(this.dnNrTag, this.Nr);
-                        this.outMsg.put(this.dnNiTag, this.Ni);
-                        this.dest.set(vertex);
-                        this.sendMessage(this.dest, this.outMsg);
-                        this.outMsg.clear();
-                    }
-                }
-                for (Integer vertex : this.Nd) {
-                    if (vertex > this.getVertexID().get()) {
-                        this.outMsg.put(this.senderTag, this.getVertexID());
-                        this.outMsg.put(this.dnNrTag, this.Nr);
-                        this.outMsg.put(this.dnNdTag, this.Nd);
-                        this.dest.set(vertex);
-                        this.sendMessage(this.dest, this.outMsg);
-                        this.outMsg.clear();
-                    }
-                }
+                sendNeighbors();
                 break;
             case 2:
-                for (MapMessage message : messages) {
-                    Integer senderId = ((Set<Integer>) message.get(this.senderTag)).iterator().next();
-
-                    Set<Integer> messageValueNr = (Set<Integer>) message.get(this.dnNrTag);
-                    Set<Integer> messageValueNi = (Set<Integer>) message.get(this.dnNiTag);
-                    Set<Integer> messageValueNd = (Set<Integer>) message.get(this.dnNdTag);
-
-                    if (messageValueNi == null) {
-                        messageValueNi = new HashSet<>(10);
-                    }
-                    if (messageValueNd == null) {
-                        messageValueNd = new HashSet<>(10);
-                    }
-
-                    if (this.Nr.contains(senderId)) {
-                        //calculate RR
-                        Set<Integer> RRList = calculateRR(this.Nr, messageValueNr);
-                        //calculate RI
-                        Set<Integer> RIList = calculateRI(this.Nr, this.Ni,
-                                messageValueNr, messageValueNi);
-                        //calculate RD
-                        Set<Integer> RDList = calculateRD(this.Nr, this.Nd,
-                                messageValueNr, messageValueNd);
-
-                        for (Integer vertex : RRList) {
-                            this.outMsg.put(this.puplusTag, RIList);
-                            this.dest.set(vertex);
-                            this.sendMessage(this.dest, this.outMsg);
-                            this.outMsg.clear();
-
-                            this.outMsg.put(this.puminusTag, RDList);
-                            this.dest.set(vertex);
-                            this.sendMessage(this.dest, this.outMsg);
-                            this.outMsg.clear();
-                        }
-                        for (Integer vertex : RIList) {
-                            this.outMsg.put(this.puplusTag, RRList);
-                            this.dest.set(vertex);
-                            this.sendMessage(this.dest, this.outMsg);
-                            this.outMsg.clear();
-
-                            this.outMsg.put(this.puplusTag, RIList, vertex);
-                            this.dest.set(vertex);
-                            this.sendMessage(this.dest, this.outMsg);
-                            this.outMsg.clear();
-                        }
-                        for (Integer vertex : RDList) {
-                            this.outMsg.put(this.puminusTag, RRList);
-                            this.dest.set(vertex);
-                            this.sendMessage(this.dest, this.outMsg);
-                            this.outMsg.clear();
-
-                            this.outMsg.put(this.puminusTag, RDList, vertex);
-                            this.dest.set(vertex);
-                            this.sendMessage(this.dest, this.outMsg);
-                            this.outMsg.clear();
-                        }
-                    }
-                    if (this.Ni.contains(senderId)) {
-                        //calculate II
-                        Set<Integer> IIList = calculateII(this.Nr, this.Ni,
-                                messageValueNr, messageValueNi);
-                        for (Integer vertex : IIList) {
-                            this.outMsg.put(this.puplusTag, IIList, vertex);
-                            this.dest.set(vertex);
-                            this.sendMessage(this.dest, this.outMsg);
-                            this.outMsg.clear();
-                        }
-                    }
-                    if (this.Nd.contains(senderId)) {
-                        //calculate DD
-                        Set<Integer> DDList = calculateDD(this.Nr, this.Nd,
-                                messageValueNr, messageValueNd);
-                        for (Integer vertex : DDList) {
-                            this.outMsg.put(this.puminusTag, DDList, vertex);
-                            this.dest.set(vertex);
-                            this.sendMessage(this.dest, this.outMsg);
-                            this.outMsg.clear();
-                        }
-                    }
-                }
+                receiveNeighbors(messages);
                 break;
             case 3:
-                for (MapMessage message : messages) {
-                    if (message.containsKey(this.puplusTag)) {
-                        Set<Integer> s = (Set<Integer>) message.get(this.puplusTag);
-                        updatePropinquity(s, UpdatePropinquity.INCREASE);
-                    } else if (message.containsKey(this.puminusTag)) {
-                        Set<Integer> s = (Set<Integer>) message.get(this.puminusTag);
-                        updatePropinquity(s, UpdatePropinquity.DECREASE);
-                    }
-                }
+                receiveConjugatePropinquity(messages);
 
                 // NOT! NR ← NR + ND
                 // BUT! NR ← NR + NI
