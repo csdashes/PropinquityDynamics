@@ -131,11 +131,12 @@ public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapMessage> {
                  * a common neighboor.
                  */
                 for (Integer v : this.Nr) {
-                    this.outMsg.put(this.NrTag, this.Nr, v);
-
-                    this.dest.set(v);
-                    this.sendMessage(this.dest, this.outMsg);
-                    this.outMsg.clear();
+                    if (this.Nr.size() > 1) {
+                        this.outMsg.put(this.NrTag, this.Nr, v);
+                        this.dest.set(v);
+                        this.sendMessage(this.dest, this.outMsg);
+                        this.outMsg.clear();
+                    }
                 }
                 break;
             case 3:
@@ -156,8 +157,7 @@ public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapMessage> {
                  */
                 Integer id = this.getVertexID().get();
                 for (Integer neighboor : this.Nr) {
-                    if (neighboor > id) {
-                        // We dont need to clear, the key is overwritten
+                    if (neighboor > id && this.Nr.size() > 1) {
                         this.outMsg.put(this.NrTag, this.Nr, neighboor);
                         this.dest.set(neighboor);
                         this.sendMessage(this.dest, this.outMsg);
@@ -241,35 +241,47 @@ public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapMessage> {
         for (Integer vertex : this.Nr) {
             this.dest.set(vertex);
 
-            this.outMsg.put(this.puplusTag, this.Ni);
-            this.sendMessage(this.dest, this.outMsg);
-            this.outMsg.clear();
+            if (this.Ni.size() > 0) {
+                this.outMsg.put(this.puplusTag, this.Ni);
+                this.sendMessage(this.dest, this.outMsg);
+                this.outMsg.clear();
+            }
 
-            this.outMsg.put(this.puminusTag, this.Nd);
-            this.sendMessage(this.dest, this.outMsg);
-            this.outMsg.clear();
+            if (this.Nd.size() > 0) {
+                this.outMsg.put(this.puminusTag, this.Nd);
+                this.sendMessage(this.dest, this.outMsg);
+                this.outMsg.clear();
+            }
         }
         for (Integer vertex : this.Ni) {
             this.dest.set(vertex);
 
-            this.outMsg.put(this.puplusTag, this.Nr);
-            this.sendMessage(this.dest, this.outMsg);
-            this.outMsg.clear();
-
-            this.outMsg.put(this.puplusTag, this.Ni, vertex);
-            this.sendMessage(this.dest, this.outMsg);
-            this.outMsg.clear();
+            if (this.Nr.size() > 0) {
+                this.outMsg.put(this.puplusTag, this.Nr);
+                this.sendMessage(this.dest, this.outMsg);
+                this.outMsg.clear();
+            }
+            
+            if (this.Ni.size() > 1) {
+                this.outMsg.put(this.puplusTag, this.Ni, vertex);
+                this.sendMessage(this.dest, this.outMsg);
+                this.outMsg.clear();
+            }
         }
         for (Integer vertex : this.Nd) {
             this.dest.set(vertex);
 
-            this.outMsg.put(this.puminusTag, this.Nr);
-            this.sendMessage(this.dest, this.outMsg);
-            this.outMsg.clear();
-
-            this.outMsg.put(this.puminusTag, this.Nd, vertex);
-            this.sendMessage(this.dest, this.outMsg);
-            this.outMsg.clear();
+            if (this.Nr.size() > 0) {
+                this.outMsg.put(this.puminusTag, this.Nr);
+                this.sendMessage(this.dest, this.outMsg);
+                this.outMsg.clear();
+            }
+            
+            if (this.Nd.size() > 1) {
+                this.outMsg.put(this.puminusTag, this.Nd, vertex);
+                this.sendMessage(this.dest, this.outMsg);
+                this.outMsg.clear();   
+            }
         }
     }
     
@@ -290,8 +302,8 @@ public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapMessage> {
             if ((vertex > this.getVertexID().get())) {
                 this.outMsg.put(this.senderTag, this.getVertexID());
                 this.outMsg.put(this.dnNrTag, this.Nr);
-                this.outMsg.put(this.dnNiTag, this.Ni);
-                this.outMsg.put(this.dnNdTag, this.Nd);
+                if (this.Ni.size() > 0) this.outMsg.put(this.dnNiTag, this.Ni);
+                if (this.Nd.size() > 0) this.outMsg.put(this.dnNdTag, this.Nd);
                 this.dest.set(vertex);
                 this.sendMessage(this.dest, this.outMsg);
                 this.outMsg.clear();
@@ -300,7 +312,7 @@ public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapMessage> {
         for (Integer vertex : this.Ni) {
             if (vertex > this.getVertexID().get()) {
                 this.outMsg.put(this.senderTag, this.getVertexID());
-                this.outMsg.put(this.dnNrTag, this.Nr);
+                if (this.Nr.size() > 0) this.outMsg.put(this.dnNrTag, this.Nr);
                 this.outMsg.put(this.dnNiTag, this.Ni);
                 this.dest.set(vertex);
                 this.sendMessage(this.dest, this.outMsg);
@@ -310,7 +322,7 @@ public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapMessage> {
         for (Integer vertex : this.Nd) {
             if (vertex > this.getVertexID().get()) {
                 this.outMsg.put(this.senderTag, this.getVertexID());
-                this.outMsg.put(this.dnNrTag, this.Nr);
+                if (this.Nr.size() > 0) this.outMsg.put(this.dnNrTag, this.Nr);
                 this.outMsg.put(this.dnNdTag, this.Nd);
                 this.dest.set(vertex);
                 this.sendMessage(this.dest, this.outMsg);
@@ -323,16 +335,9 @@ public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapMessage> {
         for (MapMessage message : messages) {
             Integer senderId = ((Set<Integer>) message.get(this.senderTag)).iterator().next();
 
-            Set<Integer> messageValueNr = (Set<Integer>) message.get(this.dnNrTag);
-            Set<Integer> messageValueNi = (Set<Integer>) message.get(this.dnNiTag);
-            Set<Integer> messageValueNd = (Set<Integer>) message.get(this.dnNdTag);
-
-            if (messageValueNi == null) {
-                messageValueNi = new HashSet<>(10);
-            }
-            if (messageValueNd == null) {
-                messageValueNd = new HashSet<>(10);
-            }
+            Set<Integer> messageValueNr = (Set<Integer>) message.getOrDefault(this.dnNrTag, new HashSet<Integer>(0));
+            Set<Integer> messageValueNi = (Set<Integer>) message.getOrDefault(this.dnNiTag, new HashSet<Integer>(0));
+            Set<Integer> messageValueNd = (Set<Integer>) message.getOrDefault(this.dnNdTag, new HashSet<Integer>(0));
 
             if (this.Nr.contains(senderId)) {
                 //calculate RR
@@ -345,37 +350,49 @@ public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapMessage> {
                         messageValueNr, messageValueNd);
 
                 for (Integer vertex : RRList) {
-                    this.outMsg.put(this.puplusTag, RIList);
-                    this.dest.set(vertex);
-                    this.sendMessage(this.dest, this.outMsg);
-                    this.outMsg.clear();
+                    if (RIList.size() > 0) {
+                        this.outMsg.put(this.puplusTag, RIList);
+                        this.dest.set(vertex);
+                        this.sendMessage(this.dest, this.outMsg);
+                        this.outMsg.clear();                        
+                    }
 
-                    this.outMsg.put(this.puminusTag, RDList);
-                    this.dest.set(vertex);
-                    this.sendMessage(this.dest, this.outMsg);
-                    this.outMsg.clear();
+                    if (RDList.size() > 0) {
+                        this.outMsg.put(this.puminusTag, RDList);
+                        this.dest.set(vertex);
+                        this.sendMessage(this.dest, this.outMsg);
+                        this.outMsg.clear();                        
+                    }
                 }
                 for (Integer vertex : RIList) {
-                    this.outMsg.put(this.puplusTag, RRList);
-                    this.dest.set(vertex);
-                    this.sendMessage(this.dest, this.outMsg);
-                    this.outMsg.clear();
+                    if (RRList.size() > 0) {
+                        this.outMsg.put(this.puplusTag, RRList);
+                        this.dest.set(vertex);
+                        this.sendMessage(this.dest, this.outMsg);
+                        this.outMsg.clear();
+                    }
 
-                    this.outMsg.put(this.puplusTag, RIList, vertex);
-                    this.dest.set(vertex);
-                    this.sendMessage(this.dest, this.outMsg);
-                    this.outMsg.clear();
+                    if (RIList.size() > 1) {
+                        this.outMsg.put(this.puplusTag, RIList, vertex);
+                        this.dest.set(vertex);
+                        this.sendMessage(this.dest, this.outMsg);
+                        this.outMsg.clear();   
+                    }
                 }
                 for (Integer vertex : RDList) {
-                    this.outMsg.put(this.puminusTag, RRList);
-                    this.dest.set(vertex);
-                    this.sendMessage(this.dest, this.outMsg);
-                    this.outMsg.clear();
+                    if (RRList.size() > 0) {
+                        this.outMsg.put(this.puminusTag, RRList);
+                        this.dest.set(vertex);
+                        this.sendMessage(this.dest, this.outMsg);
+                        this.outMsg.clear();
+                    }
 
-                    this.outMsg.put(this.puminusTag, RDList, vertex);
-                    this.dest.set(vertex);
-                    this.sendMessage(this.dest, this.outMsg);
-                    this.outMsg.clear();
+                    if (RDList.size() > 1) {
+                        this.outMsg.put(this.puminusTag, RDList, vertex);
+                        this.dest.set(vertex);
+                        this.sendMessage(this.dest, this.outMsg);
+                        this.outMsg.clear();
+                    }
                 }
             }
             if (this.Ni.contains(senderId)) {
@@ -383,10 +400,12 @@ public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapMessage> {
                 Set<Integer> IIList = calculateII(this.Nr, this.Ni,
                         messageValueNr, messageValueNi);
                 for (Integer vertex : IIList) {
-                    this.outMsg.put(this.puplusTag, IIList, vertex);
-                    this.dest.set(vertex);
-                    this.sendMessage(this.dest, this.outMsg);
-                    this.outMsg.clear();
+                    if (IIList.size() > 1) {
+                        this.outMsg.put(this.puplusTag, IIList, vertex);
+                        this.dest.set(vertex);
+                        this.sendMessage(this.dest, this.outMsg);
+                        this.outMsg.clear();    
+                    }
                 }
             }
             if (this.Nd.contains(senderId)) {
@@ -394,10 +413,12 @@ public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapMessage> {
                 Set<Integer> DDList = calculateDD(this.Nr, this.Nd,
                         messageValueNr, messageValueNd);
                 for (Integer vertex : DDList) {
-                    this.outMsg.put(this.puminusTag, DDList, vertex);
-                    this.dest.set(vertex);
-                    this.sendMessage(this.dest, this.outMsg);
-                    this.outMsg.clear();
+                    if (DDList.size() > 1) {
+                        this.outMsg.put(this.puminusTag, DDList, vertex);
+                        this.dest.set(vertex);
+                        this.sendMessage(this.dest, this.outMsg);
+                        this.outMsg.clear();
+                    }
                 }
             }
         }
