@@ -29,12 +29,13 @@ public class PDVertexWriter<KEYOUT extends Writable, VALUEOUT extends Writable, 
 
     @Override
     public void write(Vertex<V, E, M> vertex, BSPPeer<Writable, Writable, KEYOUT, VALUEOUT, GraphJobMessage> peer) throws IOException {
-        String s = "", prefix = "", delimeter = " ";
+        StringBuilder sb = new StringBuilder(vertex.getEdges().size()*100); 
+        String prefix = "", delimeter = " ";
         for (Edge<V, E> e : vertex.getEdges()) {
-            s += prefix + e.getDestinationVertexID() + "," + e.getValue().toString();
+            sb.append(prefix).append(e.getDestinationVertexID()).append(",").append(e.getValue().toString());
             prefix = delimeter;
         }
         peer.write((KEYOUT) vertex.getVertexID(), 
-                (VALUEOUT) new Text(s));
+                (VALUEOUT) new Text(sb.toString()));
     }
 }
