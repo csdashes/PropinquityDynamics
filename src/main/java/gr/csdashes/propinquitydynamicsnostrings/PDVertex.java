@@ -8,10 +8,12 @@ import static gr.csdashes.propinquitydynamicsnostrings.CalculationTable.calculat
 import gr.csdashes.propinquitydynamicsnostrings.io.MapMessage;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import org.apache.hadoop.io.VIntWritable;
 import org.apache.hama.graph.Edge;
@@ -27,7 +29,7 @@ public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapMessage> {
     Set<Integer> Ni = new HashSet<>(50); // The neighboors to be insterted
     Set<Integer> Nd = new HashSet<>(50); // The neighboors to be deleted
     // The propinquity value map
-    Map<Integer, Integer> P = new HashMap<>(150);
+    Map<Integer, Integer> P = new LinkedHashMap<>(150);
     //cutting thresshold
     int a;
     //emerging value
@@ -214,7 +216,15 @@ public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapMessage> {
                 this.Ni.clear();
                 this.Nd.clear();
 
-                for (Map.Entry<Integer, Integer> entry : this.P.entrySet()) {
+                Iterator<Entry<Integer, Integer>> it = this.P.entrySet().iterator();
+                while (it.hasNext()) {
+                    Entry<Integer, Integer> entry = it.next();
+                    
+                    if (entry.getValue() == 0) {
+                        it.remove();
+                        continue;
+                    }
+                    
                     if (entry.getValue() <= this.a && this.Nr.contains(entry.getKey())) {
                         this.Nd.add(entry.getKey());
                         this.Nr.remove(entry.getKey());
