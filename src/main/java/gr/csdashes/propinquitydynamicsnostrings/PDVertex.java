@@ -80,13 +80,13 @@ public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapMessage> {
     
     private final MapMessage outMsg = new MapMessage();
     private final VIntWritable dest = new VIntWritable();
-    
+
     /* This method is responsible to initialize the propinquity
      * hash map in each vertex. Consists of 2 steps, the angle
      * and the conjugate propinquity update.
      * @param messages The messages received in each superstep.
      */
-    private void initialize(Iterable<MapMessage> messages) throws IOException {        
+    private void initialize(Iterable<MapMessage> messages) throws IOException {
         switch (this.initializeStep.getStep()) {
             /* Create an undirected graph. From each vertex send
              * our vertex id to all of the neighboors.
@@ -122,7 +122,7 @@ public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapMessage> {
                 this.updatePropinquity(this.Nr, UpdatePropinquity.INCREASE);
 
                 /* ==== Initialize angle propinquity ====
-                 * The goal is to increase the propinquity between 2 
+                 * The goal is to increase the propinquity between 2
                  * vertexes according to the amoung of the common neighboors
                  * between them.
                  * Initialize the Nr Set by adding all the neighboors in
@@ -147,7 +147,7 @@ public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapMessage> {
                     Set<Integer> commonNeighboors = (Set<Integer>) message.get(this.NrTag);
                     updatePropinquity(commonNeighboors, UpdatePropinquity.INCREASE);
                 }
-                /* ==== Initialize conjugate propinquity ==== 
+                /* ==== Initialize conjugate propinquity ====
                  * The goal is to increase the propinquity of a vertex pair
                  * according to the amount of edges between the common neighboors
                  * of this pair.
@@ -236,7 +236,7 @@ public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapMessage> {
         //    break;
         //}
     }
-    
+
     private void sendAnglePropinquity() throws IOException {
         for (Integer vertex : this.Nr) {
             this.dest.set(vertex);
@@ -261,7 +261,7 @@ public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapMessage> {
                 this.sendMessage(this.dest, this.outMsg);
                 this.outMsg.clear();
             }
-            
+
             if (this.Ni.size() > 1) {
                 this.outMsg.put(this.puplusTag, this.Ni, vertex);
                 this.sendMessage(this.dest, this.outMsg);
@@ -276,15 +276,15 @@ public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapMessage> {
                 this.sendMessage(this.dest, this.outMsg);
                 this.outMsg.clear();
             }
-            
+
             if (this.Nd.size() > 1) {
                 this.outMsg.put(this.puminusTag, this.Nd, vertex);
                 this.sendMessage(this.dest, this.outMsg);
-                this.outMsg.clear();   
+                this.outMsg.clear();
             }
         }
     }
-    
+
     private void receiveAnglePropinquity(Iterable<MapMessage> messages) {
         for (MapMessage message : messages) {
             if (message.containsKey(this.puplusTag)) {
@@ -330,7 +330,7 @@ public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapMessage> {
             }
         }
     }
-    
+
     private void receiveNeighbors(Iterable<MapMessage> messages) throws IOException {
         for (MapMessage message : messages) {
             Integer senderId = ((Set<Integer>) message.get(this.senderTag)).iterator().next();
@@ -354,14 +354,14 @@ public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapMessage> {
                         this.outMsg.put(this.puplusTag, RIList);
                         this.dest.set(vertex);
                         this.sendMessage(this.dest, this.outMsg);
-                        this.outMsg.clear();                        
+                        this.outMsg.clear();
                     }
 
                     if (RDList.size() > 0) {
                         this.outMsg.put(this.puminusTag, RDList);
                         this.dest.set(vertex);
                         this.sendMessage(this.dest, this.outMsg);
-                        this.outMsg.clear();                        
+                        this.outMsg.clear();
                     }
                 }
                 for (Integer vertex : RIList) {
@@ -376,7 +376,7 @@ public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapMessage> {
                         this.outMsg.put(this.puplusTag, RIList, vertex);
                         this.dest.set(vertex);
                         this.sendMessage(this.dest, this.outMsg);
-                        this.outMsg.clear();   
+                        this.outMsg.clear();
                     }
                 }
                 for (Integer vertex : RDList) {
@@ -404,7 +404,7 @@ public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapMessage> {
                         this.outMsg.put(this.puplusTag, IIList, vertex);
                         this.dest.set(vertex);
                         this.sendMessage(this.dest, this.outMsg);
-                        this.outMsg.clear();    
+                        this.outMsg.clear();
                     }
                 }
             }
@@ -423,7 +423,7 @@ public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapMessage> {
             }
         }
     }
-    
+
     private void receiveConjugatePropinquity(Iterable<MapMessage> messages) {
         for (MapMessage message : messages) {
             if (message.containsKey(this.puplusTag)) {
@@ -435,7 +435,7 @@ public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapMessage> {
             }
         }
     }
-    
+
     /* This method is responsible for the incremental update
      * @param messages The messages received in each superstep.
      */
@@ -444,7 +444,7 @@ public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapMessage> {
         switch (this.incrementalStep.getStep()) {
             case 0:
                 applyNiNdCondition();
-                
+
                 // We take care of the direct connections here. If we delete a neightbor,
                 // we must decrease the propinquity etc...
                 this.updatePropinquity(this.Ni, UpdatePropinquity.INCREASE);
@@ -498,60 +498,60 @@ public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapMessage> {
             redistributeEdges();
         }
     }
-    
+
 //    @Override
 //    public void write(DataOutput d) throws IOException {
 //        super.write(d);
-//        
+//
 //        this.incrementalStep.write(d);
 //        this.initializeStep.write(d);
 //        this.mainStep.write(d);
-//        
+//
 //        WritableUtils.writeVInt(d, this.Nr.size());
 //        for (Integer v : this.Nr) {
 //            WritableUtils.writeVInt(d, v);
 //        }
-//        
+//
 //        WritableUtils.writeVInt(d, this.Ni.size());
 //        for (Integer v : this.Ni) {
 //            WritableUtils.writeVInt(d, v);
 //        }
-//        
+//
 //        WritableUtils.writeVInt(d, this.Nd.size());
 //        for (Integer v : this.Nd) {
 //            WritableUtils.writeVInt(d, v);
 //        }
-//        
+//
 //        WritableUtils.writeVInt(d, this.P.size());
 //        for (Entry<Integer, Integer> entry : this.P.entrySet()) {
 //            WritableUtils.writeVInt(d, entry.getKey());
 //            WritableUtils.writeVInt(d, entry.getValue());
 //        }
 //    }
-//    
+//
 //    @Override
 //    public void readFields(DataInput di) throws IOException {
 //        super.readFields(di);
-//        
+//
 //        this.incrementalStep.readFields(di);
 //        this.initializeStep.readFields(di);
 //        this.mainStep.readFields(di);
-//        
+//
 //        int size = WritableUtils.readVInt(di);
 //        for (int i = 0; i < size; i++) {
 //            this.Nr.add(WritableUtils.readVInt(di));
 //        }
-//        
+//
 //        size = WritableUtils.readVInt(di);
 //        for (int i = 0; i < size; i++) {
 //            this.Ni.add(WritableUtils.readVInt(di));
 //        }
-//        
+//
 //        size = WritableUtils.readVInt(di);
 //        for (int i = 0; i < size; i++) {
 //            this.Nd.add(WritableUtils.readVInt(di));
 //        }
-//        
+//
 //        // read P
 //        size = WritableUtils.readVInt(di);
 //        Integer k,v;
