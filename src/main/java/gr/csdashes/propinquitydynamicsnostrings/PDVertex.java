@@ -11,6 +11,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -37,7 +38,7 @@ public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapMessage> {
 
     private final Step mainStep = new Step(2);
     private final Step initializeStep = new Step(6);
-    private final Step incrementalStep = new Step(4);
+    private final Step incrementalStep = new Step(5);
 
     /* Increase the propinquity for each of the list items.
      * @param vertexes The list of the vertex ids to increase the propinquity
@@ -77,7 +78,8 @@ public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapMessage> {
     private final Integer dnNrTag = 6;
     private final Integer dnNiTag = 7;
     private final Integer dnNdTag = 8;
-    
+    private final Integer askNr = 9;
+
     private final MapMessage outMsg = new MapMessage();
     private final VIntWritable dest = new VIntWritable();
 
@@ -296,9 +298,40 @@ public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapMessage> {
             }
         }
     }
-    
-    private void sendNeighbors() throws IOException {
-        for (Integer vertex : this.Nr) {
+
+    /**
+     * Following Table 1 first column, we can notice that if both Ni1 and Ni2
+     * are empty, we don't need to move Nr1 and Nr2. The same applies for Nd1
+     * and Nd2.
+     */
+    private void optimizeCRR() throws IOException {
+        // I have something on my Ni or Nd so I need donation
+        if (!this.Ni.isEmpty() || !this.Nd.isEmpty()) {
+            for (Integer vertex : this.Nr) {
+                if (vertex < this.getVertexID().get()) {
+                    this.outMsg.put(this.askNr, this.getVertexID().get());
+                    this.dest.set(vertex);
+                    this.sendMessage(this.dest, this.outMsg);
+                    this.outMsg.clear(); // TODO: Maybe clearing out side of the loop is more efficient as we overwrite the key
+                }
+            }
+        }
+    }
+
+    private void sendNeighbors(Iterable<MapMessage> messages) throws IOException {
+        Set<Integer> smartNr;
+        // If I have something on my Ni or Nd, donate
+        if (!this.Ni.isEmpty() || !this.Nd.isEmpty()) {
+            smartNr = this.Nr;
+        } else {
+            // Else, donate only if I have been asked
+            smartNr = new LinkedHashSet<>(40);
+            for (MapMessage message : messages) {
+                smartNr.add(((Set<Integer>) message.get(this.askNr)).iterator().next());
+            }
+        }
+
+        for (Integer vertex : smartNr) {
             if ((vertex > this.getVertexID().get())) {
                 this.outMsg.put(this.senderTag, this.getVertexID());
                 this.outMsg.put(this.dnNrTag, this.Nr);
@@ -455,12 +488,15 @@ public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapMessage> {
             case 1:
                 receiveAnglePropinquity(messages);
 
-                sendNeighbors();
+                optimizeCRR();
                 break;
             case 2:
-                receiveNeighbors(messages);
+                sendNeighbors(messages);
                 break;
             case 3:
+                receiveNeighbors(messages);
+                break;
+            case 4:
                 receiveConjugatePropinquity(messages);
 
                 // NOT! NR ← NR + ND
