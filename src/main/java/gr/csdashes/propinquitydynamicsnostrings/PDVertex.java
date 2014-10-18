@@ -521,17 +521,20 @@ public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapMessage> {
         this.a = this.getConf().getInt("a", 0);
         this.b = this.getConf().getInt("b", 1000);
 
-        switch (this.mainStep.getStep()) {
-            case 0:
-                initialize(messages);
-                break;
-            case 1:
-                incremental(messages);
-                break;
-        }
-
-        if (this.getSuperstepCount() >= 100) {
+        if (this.incrementalStep.getIteration() >= 3) {
             redistributeEdges();
+            if (this.getVertexID().get() == 0) {
+                System.out.println(this.incrementalStep.getIteration());
+            }
+        } else {
+            switch (this.mainStep.getStep()) {
+                case 0:
+                    initialize(messages);
+                    break;
+                case 1:
+                    incremental(messages);
+                    break;
+            }
         }
     }
 
