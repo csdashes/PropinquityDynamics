@@ -79,6 +79,8 @@ public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapMessage> {
     private final Integer dnNiTag = 7;
     private final Integer dnNdTag = 8;
     private final Integer askNr = 9;
+    private final Integer askCIITag = 10;
+    private final Integer askCDDTag = 11;
 
     private final MapMessage outMsg = new MapMessage();
     private final VIntWritable dest = new VIntWritable();
@@ -318,17 +320,67 @@ public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapMessage> {
         }
     }
 
+    private void optimizeCII() throws IOException {
+        for (Integer vertex : this.Ni) {
+            this.outMsg.put(this.askCIITag, this.Ni.size() + this.Nr.size());
+            this.outMsg.put(this.senderTag, this.getVertexID().get());
+            this.dest.set(vertex);
+            this.sendMessage(this.dest, this.outMsg);
+            this.outMsg.clear();
+        }
+    }
+
+    private void optimizeCDD() throws IOException {
+        for (Integer vertex : this.Nd) {
+            this.outMsg.put(this.askCDDTag, this.Nd.size() + this.Nr.size());
+            this.outMsg.put(this.senderTag, this.getVertexID().get());
+            this.dest.set(vertex);
+            this.sendMessage(this.dest, this.outMsg);
+            this.outMsg.clear();
+        }
+    }
+
     private void sendNeighbors(Iterable<MapMessage> messages) throws IOException {
-        Set<Integer> smartNr;
+        Set<Integer> smartNr = new LinkedHashSet<>(40);
+        Set<Integer> smartNi = new LinkedHashSet<>(40);
+        Set<Integer> smartNd = new LinkedHashSet<>(40);
+
+        for (MapMessage message : messages) {
+            if (message.containsKey(this.askNr)) {
+                smartNr.add(((Set<Integer>) message.get(this.askNr)).iterator().next());
+            } else if (message.containsKey(this.askCIITag)) {
+                // Basically, if the other vertex has bigger lists, send our
+                // lists. In case of equality, if we have smaller ID we send
+                // the lists
+                Integer NrNiSum = ((Set<Integer>) message.get(this.askCIITag)).iterator().next();
+                Integer otherID = ((Set<Integer>) message.get(this.senderTag)).iterator().next();
+
+                if (NrNiSum > (this.Ni.size() + this.Nr.size())) {
+                    smartNi.add(otherID);
+                } else if (NrNiSum == (this.Ni.size() + this.Nr.size())) {
+                    if (otherID > this.getVertexID().get()) {
+                        smartNi.add(otherID);
+                    }
+                }
+            } else if (message.containsKey(this.askCDDTag)) {
+                Integer NrNdSum = ((Set<Integer>) message.get(this.askCDDTag)).iterator().next();
+                Integer otherID = ((Set<Integer>) message.get(this.senderTag)).iterator().next();
+
+                if (NrNdSum > (this.Nd.size() + this.Nr.size())) {
+                    smartNd.add(otherID);
+                } else if (NrNdSum == (this.Nd.size() + this.Nr.size())) {
+                    if (otherID > this.getVertexID().get()) {
+                        smartNd.add(otherID);
+                    }
+                }
+            } else {
+                throw new IOException("There is a message without tag! -> " + message);
+            }
+        }
+
         // If I have something on my Ni or Nd, donate
         if (!this.Ni.isEmpty() || !this.Nd.isEmpty()) {
             smartNr = this.Nr;
-        } else {
-            // Else, donate only if I have been asked
-            smartNr = new LinkedHashSet<>(40);
-            for (MapMessage message : messages) {
-                smartNr.add(((Set<Integer>) message.get(this.askNr)).iterator().next());
-            }
         }
 
         for (Integer vertex : smartNr) {
@@ -342,25 +394,21 @@ public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapMessage> {
                 this.outMsg.clear();
             }
         }
-        for (Integer vertex : this.Ni) {
-            if (vertex > this.getVertexID().get()) {
-                this.outMsg.put(this.senderTag, this.getVertexID());
-                if (this.Nr.size() > 0) this.outMsg.put(this.dnNrTag, this.Nr);
-                this.outMsg.put(this.dnNiTag, this.Ni);
-                this.dest.set(vertex);
-                this.sendMessage(this.dest, this.outMsg);
-                this.outMsg.clear();
-            }
+        for (Integer vertex : smartNi) {
+            this.outMsg.put(this.senderTag, this.getVertexID());
+            if (this.Nr.size() > 0) this.outMsg.put(this.dnNrTag, this.Nr);
+            this.outMsg.put(this.dnNiTag, this.Ni);
+            this.dest.set(vertex);
+            this.sendMessage(this.dest, this.outMsg);
+            this.outMsg.clear();
         }
-        for (Integer vertex : this.Nd) {
-            if (vertex > this.getVertexID().get()) {
-                this.outMsg.put(this.senderTag, this.getVertexID());
-                if (this.Nr.size() > 0) this.outMsg.put(this.dnNrTag, this.Nr);
-                this.outMsg.put(this.dnNdTag, this.Nd);
-                this.dest.set(vertex);
-                this.sendMessage(this.dest, this.outMsg);
-                this.outMsg.clear();
-            }
+        for (Integer vertex : smartNd) {
+            this.outMsg.put(this.senderTag, this.getVertexID());
+            if (this.Nr.size() > 0) this.outMsg.put(this.dnNrTag, this.Nr);
+            this.outMsg.put(this.dnNdTag, this.Nd);
+            this.dest.set(vertex);
+            this.sendMessage(this.dest, this.outMsg);
+            this.outMsg.clear();
         }
     }
 
@@ -489,6 +537,8 @@ public class PDVertex extends Vertex<VIntWritable, VIntWritable, MapMessage> {
                 receiveAnglePropinquity(messages);
 
                 optimizeCRR();
+                optimizeCII();
+                optimizeCDD();
                 break;
             case 2:
                 sendNeighbors(messages);
